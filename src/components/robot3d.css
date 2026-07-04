@@ -1,0 +1,61 @@
+/* ─────────── Robot 3D compartido (three.js) ───────────
+   Estilos internos del componente <Robot3D>. El posicionamiento del
+   contenedor (fixed, tamaño, esquina) lo define la clase que le pasa cada
+   página (.lp-robot en la landing, .dp-robot en el diplomado). Aquí solo
+   viven el lienzo y el bocadillo de texto que flota sobre el robot. */
+
+.r3d-canvas {
+  width: 100%;
+  height: 100%;
+}
+.r3d-canvas canvas {
+  display: block;
+}
+
+/* Bocadillo "¡Especialízate!" sobre la cabeza del robot */
+.r3d-bubble {
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  transform: translateX(-50%);
+  z-index: 2;
+  white-space: nowrap;
+  padding: 7px 15px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #1a73e8 0%, #4c8dff 100%);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  line-height: 1;
+  box-shadow: 0 6px 16px rgba(26, 115, 232, 0.38);
+  animation: r3d-bob 2.6s ease-in-out infinite;
+}
+
+/* Colita del bocadillo apuntando hacia el robot */
+.r3d-bubble__tail {
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 11px;
+  height: 11px;
+  background: #3f84ff;
+  border-radius: 2px;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+@keyframes r3d-bob {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .r3d-bubble {
+    animation: none;
+  }
+}

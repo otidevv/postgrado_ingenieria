@@ -1,0 +1,66 @@
+/* ─────────── Lluvia de pétalos de sakura ───────────
+   Overlay decorativo a pantalla completa. No bloquea clics y cae por delante
+   del contenido. Cada pétalo cae en bucle con un vaivén lateral (--drift) y
+   una rotación continua, dando el efecto de hojas de cerezo flotando. */
+
+.sakura {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 60;
+}
+
+.sakura__petal {
+  position: absolute;
+  top: 0;
+  /* Forma de pétalo: redondeado con una punta */
+  border-radius: 150% 0 150% 0;
+  background: linear-gradient(135deg, #ffe3ee 0%, #ffb9d4 55%, #ff9dc4 100%);
+  box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.55);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation-name: sakura-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* Variantes de tono/opacidad para dar profundidad al conjunto */
+.sakura__petal--0 {
+  background: linear-gradient(135deg, #ffe8f1 0%, #ffc3da 55%, #ffa8cc 100%);
+}
+.sakura__petal--1 {
+  background: linear-gradient(135deg, #ffd9e8 0%, #ffabcb 55%, #ff8fbb 100%);
+  opacity: 0;
+}
+.sakura__petal--2 {
+  background: linear-gradient(135deg, #fff0f6 0%, #ffd0e2 55%, #ffb8d5 100%);
+}
+
+@keyframes sakura-fall {
+  0% {
+    transform: translateY(-12vh) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateY(45vh) translateX(var(--drift, 40px)) rotate(200deg);
+    opacity: 0.95;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(112vh) translateX(0) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Respeta la preferencia de menos movimiento: sin lluvia de pétalos */
+@media (prefers-reduced-motion: reduce) {
+  .sakura {
+    display: none;
+  }
+}

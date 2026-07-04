@@ -1,0 +1,367 @@
+// Conadis admin · Prisma schema
+// Postgres + RBAC (User ↔ Role ↔ Permission) + sessions
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String
+  passwordHash String
+  active       Boolean    @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  roles    UserRole[]
+  sessions Session[]
+
+  reportedIncidents Incident[]         @relation("IncidentReporter")
+  assignedIncidents Incident[]         @relation("IncidentAssignee")
+  comments          IncidentComment[]
+  attachments       IncidentAttachment[]
+  statusChanges     IncidentStatusLog[]
+
+  reviewedApplications DiplomaApplication[] @relation("ApplicationReviewer")
+
+  @@index([active])
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String?
+  system      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       UserRole[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String?
+  category    String
+
+  roles RolePermission[]
+
+  @@index([category])
+}
+
+model UserRole {
+  userId     String
+  roleId     String
+  assignedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([roleId])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+}
+
+model Session {
+  id         String      @id @default(cuid())
+  userId     String
+  token      String      @unique
+  expiresAt  DateTime
+  createdAt  DateTime    @default(now())
+  userAgent  String?
+  ip         String?
+  clientType ClientType  @default(web)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+enum ClientType {
+  web
+  mobile
+}
+
+// ─────────────────────────── Incident reporting ───────────────────────────
+
+enum IncidentStatus {
+  open
+  triaged
+  in_progress
+  resolved
+  rejected
+  closed
+}
+
+enum IncidentSeverity {
+  low
+  medium
+  high
+  critical
+}
+
+model IncidentCategory {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String?
+  icon        String?
+  order       Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  incidents Incident[]
+}
+
+model Incident {
+  id            String           @id @default(cuid())
+  code          String           @unique // public tracking code, e.g. INC-2026-000123
+  title         String
+  description   String
+  status        IncidentStatus   @default(open)
+  severity      IncidentSeverity @default(medium)
+  categoryId    String
+
+  // Optional geo. If supplied, both must be present (validated app-side).
+  lat           Float?
+  lng           Float?
+  locationText  String?
+
+  reporterId    String?  // nullable to allow soft-deletion of reporter
+  assignedToId  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  resolvedAt    DateTime?
+
+  category    IncidentCategory     @relation(fields: [categoryId], references: [id])
+  reporter    User?                @relation("IncidentReporter", fields: [reporterId], references: [id], onDelete: SetNull)
+  assignedTo  User?                @relation("IncidentAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  attachments IncidentAttachment[]
+  comments    IncidentComment[]
+  statusLog   IncidentStatusLog[]
+
+  @@index([reporterId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([categoryId])
+  @@index([createdAt])
+}
+
+model IncidentAttachment {
+  id          String   @id @default(cuid())
+  incidentId  String
+  url         String
+  mimeType    String
+  sizeBytes   Int?
+  uploadedById String?
+  createdAt   DateTime @default(now())
+
+  incident   Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  uploadedBy User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([incidentId])
+}
+
+model IncidentComment {
+  id         String   @id @default(cuid())
+  incidentId String
+  authorId   String?
+  body       String
+  internal   Boolean  @default(false) // true = visible only to admins
+  createdAt  DateTime @default(now())
+
+  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  author   User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([incidentId])
+}
+
+model IncidentStatusLog {
+  id         String         @id @default(cuid())
+  incidentId String
+  fromStatus IncidentStatus
+  toStatus   IncidentStatus
+  byUserId   String?
+  note       String?
+  createdAt  DateTime       @default(now())
+
+  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  byUser   User?    @relation(fields: [byUserId], references: [id], onDelete: SetNull)
+
+  @@index([incidentId])
+}
+
+// ─────────────────────────── Diplomados de posgrado ───────────────────────────
+
+enum DiplomaStatus {
+  draft      // borrador, no visible al público
+  published  // publicado y visible en la landing
+  closed     // archivado / edición cerrada
+}
+
+model Diploma {
+  id          String        @id @default(cuid())
+  slug        String        @unique // identificador para la URL pública, ej. "tic"
+  code        String        @unique // código del programa, ej. "DTIC"
+  title       String                // "Tecnologías de la Información y Comunicación"
+  subtitle    String?               // "Diplomado de Posgrado"
+  faculty     String                // "Facultad de Ingeniería · Unidad de Posgrado"
+  summary     String                // resumen corto para las tarjetas
+  description String                // fundamentación académica (texto largo)
+  objective   String                // objetivo general
+  status      DiplomaStatus @default(draft)
+
+  modality        String            // "Semipresencial · Google Meet"
+  schedule        String            // "Viernes y sábado"
+  totalHours      Int               // 384
+  credits         Int               // 24
+  weeksPerModule  Int    @default(4)
+  minEnrollment   Int    @default(35)
+
+  // Costos en soles (PEN)
+  enrollmentFee    Int              // matrícula, ej. 200
+  moduleFee        Int              // por módulo, ej. 300
+  certificationFee Int              // certificación, ej. 50
+
+  admissionLabel String?            // "Admisión 2026-II", etc.
+  featured       Boolean  @default(false)
+  order          Int      @default(0)
+
+  // Listas de texto (Postgres text[])
+  objectives      String[]          // objetivos específicos
+  requirements    String[]          // requisitos del postulante
+  graduateProfile String[]          // perfil del egresado
+  instructors     String[]          // docentes / responsables del diplomado
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  modules      DiplomaModule[]
+  applications DiplomaApplication[]
+
+  @@index([status])
+}
+
+model DiplomaModule {
+  id         String   @id @default(cuid())
+  diplomaId  String
+  code       String            // "DTIC-M1"
+  order      Int               // 1..n
+  name       String            // "Redes y Seguridad"
+  syncHours  Int               // horas sincrónicas, ej. 40
+  asyncHours Int               // horas asincrónicas, ej. 24
+  totalHours Int               // ej. 64
+  credits    Int               // ej. 4
+  summary    String            // sumilla del curso
+  topics     String[]          // temas principales del contenido
+
+  diploma Diploma @relation(fields: [diplomaId], references: [id], onDelete: Cascade)
+
+  @@unique([diplomaId, code])
+  @@index([diplomaId])
+}
+
+// ─────────────────────────── Postulaciones a diplomados ───────────────────────────
+
+enum ApplicationStatus {
+  pending    // recibida, pendiente de revisión
+  reviewing  // en evaluación
+  accepted   // admitido
+  rejected   // no admitido
+  waitlist   // en lista de espera
+}
+
+enum IdDocType {
+  DNI
+  CE          // carné de extranjería
+  PASAPORTE
+}
+
+model DiplomaApplication {
+  id        String @id @default(cuid())
+  code      String @unique // código público de seguimiento, ej. POST-2026-000123
+  diplomaId String
+
+  // Identidad
+  docType   IdDocType @default(DNI)
+  docNumber String
+  firstName String
+  lastName  String
+  birthDate DateTime?
+  gender    String?
+
+  // Contacto
+  email    String
+  phone    String
+  address  String?
+  region   String?
+  province String?
+  district String?
+
+  // Académico / profesional
+  academicDegree String? // Bachiller / Título / Egresado / Magíster / Doctor
+  profession     String?
+  university     String? // universidad o institución de procedencia
+  employer       String? // centro laboral
+  position       String? // cargo
+
+  // Preferencias / motivación
+  modality   String?
+  motivation String? // carta de intención
+
+  // Gestión / revisión
+  status       ApplicationStatus @default(pending)
+  reviewNote   String?
+  reviewedById String?
+  reviewedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  diploma    Diploma               @relation(fields: [diplomaId], references: [id], onDelete: Cascade)
+  reviewedBy User?                 @relation("ApplicationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  documents  ApplicationDocument[]
+
+  @@unique([diplomaId, docNumber]) // una postulación por documento y diplomado
+  @@index([diplomaId])
+  @@index([status])
+  @@index([docNumber])
+  @@index([createdAt])
+}
+
+model ApplicationDocument {
+  id            String @id @default(cuid())
+  applicationId String
+  kind          String // "identidad" | "grado" | "cv" | "pago" | "otro"
+  label         String // etiqueta legible
+  fileName      String // nombre original del archivo
+  storedPath    String // ruta relativa privada en disco
+  mimeType      String
+  sizeBytes     Int
+  createdAt     DateTime @default(now())
+
+  application DiplomaApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+}

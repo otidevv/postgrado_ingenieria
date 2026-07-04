@@ -1,0 +1,432 @@
+/* ─────────── Formulario de postulación a diplomado ───────────
+   Usa los tokens de globals.css, así que respeta el tema claro/oscuro. */
+
+.ps {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Nav */
+.ps-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: saturate(1.1) blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+.ps-nav__inner {
+  max-width: 980px;
+  margin-inline: auto;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.ps-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+.ps-brand__mark {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 800;
+  font-size: 18px;
+}
+.ps-brand__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.ps-brand__name {
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+.ps-brand__sub {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.ps-nav__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.ps-nav__back:hover {
+  color: var(--accent);
+}
+.ps-nav__back-ic {
+  transform: rotate(180deg);
+}
+
+/* Hero */
+.ps-hero {
+  background: linear-gradient(180deg, var(--accent-softer), transparent);
+  border-bottom: 1px solid var(--border);
+}
+.ps-hero__inner {
+  max-width: 980px;
+  margin-inline: auto;
+  padding: 40px 20px 32px;
+}
+.ps-eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.ps-hero h1 {
+  font-size: clamp(24px, 3.4vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0 0 10px;
+  color: var(--text);
+}
+.ps-hero p {
+  max-width: 640px;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.55;
+  margin: 0 0 18px;
+}
+.ps-hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.ps-hero__meta li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+.ps-hero__meta svg {
+  color: var(--accent);
+}
+
+/* Layout del formulario */
+.ps-main {
+  max-width: 980px;
+  margin-inline: auto;
+  padding: 28px 20px 80px;
+}
+.ps-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.ps-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: #fdecea;
+  border: 1px solid #f5c2c7;
+  color: #b71c1c;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Secciones */
+.ps-sect {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: 20px 22px 24px;
+  box-shadow: var(--shadow-sm);
+}
+.ps-sect legend {
+  padding: 0 8px;
+  margin-left: -8px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.ps-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 18px;
+  margin-top: 8px;
+}
+.ps-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.ps-field--wide,
+.ps-field--full {
+  grid-column: 1 / -1;
+}
+.ps-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.ps-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.ps-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+textarea.ps-input {
+  resize: vertical;
+  min-height: 88px;
+}
+.ps-input.is-invalid {
+  border-color: #d93025;
+  background: #fff8f7;
+}
+.ps-err {
+  font-size: 12.5px;
+  color: #d93025;
+  font-weight: 600;
+}
+.ps-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 4px 0 14px;
+}
+
+/* Documentos */
+.ps-docs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.ps-doc {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  background: var(--bg-soft);
+}
+.ps-doc.is-invalid {
+  border-color: #d93025;
+}
+.ps-doc__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.ps-doc__label {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+.ps-doc__file {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e8e3e;
+  max-width: 55%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ps-doc__hint {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin: 4px 0 10px;
+}
+.ps-doc__drop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.ps-doc__drop:hover {
+  border-color: var(--accent);
+  background: var(--accent-softer);
+}
+.ps-doc__drop input[type="file"] {
+  display: none;
+}
+
+/* Consentimiento */
+.ps-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.ps-consent.is-invalid {
+  border-color: #d93025;
+}
+.ps-consent input {
+  margin-top: 2px;
+  width: 17px;
+  height: 17px;
+  accent-color: var(--accent);
+  flex: none;
+}
+
+/* Envío */
+.ps-submit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.ps-required-note {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Botones */
+.ps-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+.ps-btn--lg {
+  padding: 13px 24px;
+  font-size: 15px;
+}
+.ps-btn--primary {
+  background: var(--accent);
+  color: #fff;
+}
+.ps-btn--primary:hover {
+  background: var(--accent-hover);
+}
+.ps-btn--primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.ps-btn--ghost {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.ps-btn--ghost:hover {
+  background: var(--bg-soft);
+}
+
+/* Pantalla de éxito */
+.ps-done {
+  max-width: 620px;
+  margin: 10px auto;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px 32px;
+  box-shadow: var(--shadow-md);
+}
+.ps-done__icon {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  background: #e6f4ea;
+  color: #1e8e3e;
+}
+.ps-done h2 {
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0 0 10px;
+}
+.ps-done p {
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0 auto 16px;
+  max-width: 500px;
+}
+.ps-code {
+  display: inline-block;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--accent);
+  background: var(--accent-softer);
+  border: 1px dashed var(--accent);
+  border-radius: var(--radius);
+  padding: 10px 22px;
+  margin-bottom: 8px;
+}
+.ps-done__note {
+  font-size: 13.5px;
+}
+.ps-done__actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .ps-grid,
+  .ps-docs {
+    grid-template-columns: 1fr;
+  }
+  .ps-hero__inner {
+    padding: 28px 20px 24px;
+  }
+}
