@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/admin/Icon";
 import { Robot3D } from "@/components/Robot3D";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { THEME_KEY } from "@/lib/ui/theme";
 import type { DiplomaCard } from "@/lib/diplomas";
 import "./landing.css";
@@ -26,53 +27,26 @@ const NAV_LINKS = [
 type Program = {
   icon: IconName;
   title: string;
-  level: string;
-  meta: string;
+  level?: string;
+  meta?: string;
   desc: string;
 };
 
 const PROGRAMS: Program[] = [
   {
-    icon: "cloud",
-    title: "Ingeniería de Sistemas e Informática",
-    level: "Maestría",
-    meta: "2 años · Semipresencial",
-    desc: "Arquitectura de software, ciencia de datos e inteligencia artificial aplicada a la industria.",
-  },
-  {
-    icon: "sparkle",
-    title: "Ingeniería Ambiental",
-    level: "Maestría",
-    meta: "2 años · Presencial",
-    desc: "Gestión sostenible de ecosistemas amazónicos y evaluación de impacto ambiental.",
-  },
-  {
-    icon: "rules",
-    title: "Ingeniería Civil",
-    level: "Maestría",
-    meta: "2 años · Semipresencial",
-    desc: "Estructuras, geotecnia e infraestructura resiliente para el desarrollo regional.",
-  },
-  {
-    icon: "chart",
-    title: "Gestión de Proyectos",
-    level: "Maestría",
-    meta: "18 meses · Semipresencial",
-    desc: "Dirección de proyectos bajo estándares internacionales y buenas prácticas del PMI.",
+    icon: "settings",
+    title: "Ingeniería Agroindustrial",
+    desc: "Programas orientados a la innovación de procesos productivos, la transformación agroindustrial y el aprovechamiento sostenible de los recursos naturales.",
   },
   {
     icon: "shield",
-    title: "Ciencias e Ingeniería",
-    level: "Doctorado",
-    meta: "3 años · Presencial",
-    desc: "Formación de investigadores con producción científica indexada y de alto impacto.",
+    title: "Ingeniería Forestal y Medio Ambiente",
+    desc: "Programas enfocados en la gestión sostenible de los recursos forestales, la conservación ambiental y el desarrollo territorial.",
   },
   {
-    icon: "folder",
-    title: "Ciencia de Datos",
-    level: "Diplomado",
-    meta: "6 meses · Virtual",
-    desc: "Analítica, visualización y machine learning con un enfoque práctico y aplicado.",
+    icon: "cloud",
+    title: "Ingeniería de Sistemas e Informática",
+    desc: "Programas dirigidos a la transformación digital, el desarrollo tecnológico y la innovación en sistemas de información.",
   },
 ];
 
@@ -262,36 +236,6 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
         </div>
       </section>
 
-      {/* ─────────── Programas ─────────── */}
-      <section className="lp-section" id="programas">
-        <div className="lp-section__head">
-          <span className="lp-kicker">Oferta académica</span>
-          <h2>Programas de posgrado</h2>
-          <p>
-            Maestrías, doctorado y diplomados diseñados junto al sector
-            productivo y la comunidad científica de la región.
-          </p>
-        </div>
-
-        <div className="lp-programs">
-          {PROGRAMS.map((p) => (
-            <article key={p.title} className="lp-program">
-              <span className="lp-program__icon">
-                <Icon name={p.icon} size={24} />
-              </span>
-              <span className="lp-program__level">{p.level}</span>
-              <h3 className="lp-program__title">{p.title}</h3>
-              <p className="lp-program__meta">{p.meta}</p>
-              <p className="lp-program__desc">{p.desc}</p>
-              <a href="#admision" className="lp-program__link">
-                Ver detalles
-                <Icon name="chevron-right" size={16} />
-              </a>
-            </article>
-          ))}
-        </div>
-      </section>
-
       {/* ─────────── Diplomados (datos reales de la BD) ─────────── */}
       {diplomas.length > 0 && (
         <section className="lp-section" id="diplomados">
@@ -345,6 +289,38 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
           </div>
         </section>
       )}
+
+      {/* ─────────── Programas ─────────── */}
+      <section className="lp-section" id="programas">
+        <div className="lp-section__head">
+          <span className="lp-kicker">Oferta académica</span>
+          <h2>Programas de posgrado</h2>
+          <p>
+            Maestrías, doctorado y diplomados diseñados junto al sector
+            productivo y la comunidad científica de la región.
+          </p>
+        </div>
+
+        <div className="lp-programs">
+          {PROGRAMS.map((p) => (
+            <article key={p.title} className="lp-program">
+              <span className="lp-program__icon">
+                <Icon name={p.icon} size={24} />
+              </span>
+              {p.level && (
+                <span className="lp-program__level">{p.level}</span>
+              )}
+              <h3 className="lp-program__title">{p.title}</h3>
+              {p.meta && <p className="lp-program__meta">{p.meta}</p>}
+              <p className="lp-program__desc">{p.desc}</p>
+              <a href="#admision" className="lp-program__link">
+                Ver detalles
+                <Icon name="chevron-right" size={16} />
+              </a>
+            </article>
+          ))}
+        </div>
+      </section>
 
       {/* ─────────── Ventajas ─────────── */}
       <section className="lp-section lp-section--soft" id="ventajas">
@@ -479,6 +455,9 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
 
       {/* Robot 3D caminante (decoración flotante, esquina inferior izquierda) */}
       <Robot3D className="lp-robot" />
+
+      {/* Botón flotante de WhatsApp — esquina inferior derecha */}
+      <WhatsAppButton />
     </div>
   );
 }

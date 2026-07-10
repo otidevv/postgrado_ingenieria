@@ -115,7 +115,7 @@ export type FieldErrors = Record<string, string>;
 // Estado del Server Action (para useActionState)
 export type SubmitState =
   | { status: "idle" }
-  | { status: "error"; message: string; fieldErrors?: FieldErrors }
+  | { status: "error"; message: string; fieldErrors?: FieldErrors; modal?: boolean }
   | { status: "success"; code: string };
 
 export const INITIAL_SUBMIT_STATE: SubmitState = { status: "idle" };

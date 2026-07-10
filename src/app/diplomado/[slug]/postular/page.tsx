@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { Icon } from "@/components/admin/Icon";
 import { getPublishedDiplomaBySlug } from "@/lib/diplomas";
 import { PostularForm } from "./PostularForm";
+import { Robot3D } from "@/components/Robot3D";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +31,14 @@ export default async function PostularPage({ params }: Params) {
       <header className="ps-nav">
         <div className="ps-nav__inner">
           <Link href="/" className="ps-brand">
-            <span className="ps-brand__mark">U</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logos/logo_unamad.png"
+              alt="Escudo de la Universidad Nacional Amazónica de Madre de Dios"
+              className="ps-brand__logo"
+              width={40}
+              height={40}
+            />
             <span className="ps-brand__text">
               <span className="ps-brand__name">UNAMAD</span>
               <span className="ps-brand__sub">Escuela de Posgrado</span>
@@ -67,6 +76,12 @@ export default async function PostularPage({ params }: Params) {
       <main className="ps-main">
         <PostularForm slug={slug} diplomaTitle={d.title} modality={d.modality} />
       </main>
+
+      {/* Personaje 3D flotante — esquina inferior izquierda */}
+      <Robot3D className="ps-robot" />
+
+      {/* Botón flotante de WhatsApp — esquina inferior derecha */}
+      <WhatsAppButton />
     </div>
   );
 }

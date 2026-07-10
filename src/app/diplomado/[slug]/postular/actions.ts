@@ -68,6 +68,7 @@ export async function submitApplication(
   if (!diploma) {
     return {
       status: "error",
+      modal: true,
       message: "El diplomado no está disponible para postulación.",
     };
   }
@@ -143,6 +144,7 @@ export async function submitApplication(
   if (existing) {
     return {
       status: "error",
+      modal: true,
       message: `Ya existe una postulación con este documento para este diplomado (código ${existing.code}).`,
       fieldErrors: { docNumber: "Este documento ya postuló a este diplomado." },
     };
@@ -181,6 +183,7 @@ export async function submitApplication(
     ) {
       return {
         status: "error",
+        modal: true,
         message:
           "Ya existe una postulación con este documento para este diplomado.",
         fieldErrors: { docNumber: "Este documento ya postuló a este diplomado." },
@@ -189,6 +192,7 @@ export async function submitApplication(
     console.error("submitApplication: error creando postulación", e);
     return {
       status: "error",
+      modal: true,
       message: "Ocurrió un error al registrar tu postulación. Inténtalo de nuevo.",
     };
   }
@@ -221,6 +225,7 @@ export async function submitApplication(
       .catch(() => undefined);
     return {
       status: "error",
+      modal: true,
       message: "No se pudieron guardar los documentos. Inténtalo de nuevo.",
     };
   }

@@ -8,6 +8,7 @@ import { DiplomaTabs } from "./DiplomaTabs";
 import { ModuleAccordion } from "./ModuleAccordion";
 import { Robot3D } from "@/components/Robot3D";
 import { SakuraPetals } from "@/components/SakuraPetals";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import "./diploma.css";
 
 // Ruta 100% dependiente de la BD: no intentar prerender/generación estática.
@@ -59,7 +60,14 @@ export default async function DiplomaPage({ params }: Params) {
       <header className="dp-nav">
         <div className="dp-nav__inner">
           <Link href="/" className="dp-brand">
-            <span className="dp-brand__mark">U</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logos/logo_unamad.png"
+              alt="Escudo de la Universidad Nacional Amazónica de Madre de Dios"
+              className="dp-brand__logo"
+              width={42}
+              height={42}
+            />
             <span className="dp-brand__text">
               <span className="dp-brand__name">UNAMAD</span>
               <span className="dp-brand__sub">Escuela de Posgrado</span>
@@ -151,6 +159,13 @@ export default async function DiplomaPage({ params }: Params) {
                 </clipPath>
               </defs>
             </svg>
+            {/* Escudo UNAMAD centrado en el hueco del anillo (decorativo). */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logos/logo_unamad.png"
+              alt=""
+              className="dp-hero__decor-logo"
+            />
           </div>
         </div>
       </section>
@@ -382,6 +397,9 @@ export default async function DiplomaPage({ params }: Params) {
 
       {/* Personaje 3D flotante (three.js) — esquina inferior izquierda */}
       <Robot3D />
+
+      {/* Botón flotante de WhatsApp — esquina inferior derecha */}
+      <WhatsAppButton />
     </div>
   );
 }

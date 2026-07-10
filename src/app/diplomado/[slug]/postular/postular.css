@@ -32,16 +32,199 @@
   text-decoration: none;
   color: inherit;
 }
-.ps-brand__mark {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
+.ps-brand__logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* Personaje 3D flotante (three.js) — esquina inferior izquierda.
+   (Réplica de .dp-robot, que vive en diploma.css y no se carga en esta ruta.) */
+.ps-robot {
+  position: fixed;
+  left: 16px;
+  bottom: 12px;
+  width: 240px;
+  height: 340px;
+  z-index: 20;
+  pointer-events: none;
+  filter: drop-shadow(0 12px 20px rgba(32, 33, 36, 0.18));
+}
+.ps-robot canvas {
+  display: block;
+}
+@media (max-width: 1200px) {
+  .ps-robot {
+    display: none;
+  }
+}
+
+/* Autocompletado por DNI */
+.ps-dni-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.ps-dni-row .ps-input {
+  flex: 1;
+  min-width: 0;
+}
+.ps-dni-btn {
+  flex-shrink: 0;
+  padding: 0 14px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
   background: var(--accent);
   color: #fff;
-  font-weight: 800;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, opacity 0.15s;
+}
+.ps-dni-btn:hover:not(:disabled) {
+  background: var(--accent-hover, #1765cc);
+}
+.ps-dni-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ps-dni-msg {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 12.5px;
+}
+.ps-dni-msg--loading {
+  color: var(--text-muted);
+}
+.ps-dni-msg--ok {
+  color: var(--st-resolved-fg, #065f46);
+}
+.ps-dni-msg--error {
+  color: var(--st-rejected-fg, #991b1b);
+}
+
+/* Modal informativo de autocompletado por DNI */
+.ps-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(2px);
+  animation: ps-modal-fade 0.15s ease;
+}
+.ps-modal__card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  animation: ps-modal-pop 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes ps-modal-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes ps-modal-pop {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.ps-modal__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 20px 12px;
+}
+.ps-modal__icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--st-resolved-bg);
+  color: var(--st-resolved-fg);
+}
+.ps-modal__icon--error {
+  background: var(--st-rejected-bg);
+  color: var(--st-rejected-fg);
+}
+.ps-modal__msg--pad {
+  padding-bottom: 4px;
+}
+.ps-modal__heading {
+  min-width: 0;
+}
+.ps-modal__title {
+  margin: 0;
+  font-family: "Google Sans", sans-serif;
   font-size: 18px;
+  font-weight: 600;
+}
+.ps-modal__sub {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.ps-modal__x {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.ps-modal__x:hover {
+  background: var(--bg-sunken);
+  color: var(--text);
+}
+.ps-modal__msg {
+  margin: 0;
+  padding: 0 20px 6px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+.ps-modal__list {
+  margin: 12px 0 0;
+  padding: 0 20px;
+}
+.ps-modal__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+.ps-modal__row:first-child {
+  border-top: none;
+}
+.ps-modal__row dt {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.ps-modal__row dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: right;
+}
+.ps-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 20px 20px;
 }
 .ps-brand__text {
   display: flex;
