@@ -20,6 +20,9 @@
 # production
 /build
 
+# uploaded files (runtime user data — never commit)
+/storage/
+
 # misc
 .DS_Store
 *.pem
