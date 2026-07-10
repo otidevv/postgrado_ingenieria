@@ -25,18 +25,10 @@ html {
   gap: 12px;
   color: var(--text);
 }
-.lp-brand__mark {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #7baef9, #1a73e8);
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font-family: "Google Sans", sans-serif;
-  font-weight: 600;
-  font-size: 20px;
-  letter-spacing: -0.02em;
+.lp-brand__logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
   flex-shrink: 0;
 }
 .lp-brand__text {
@@ -205,18 +197,54 @@ html {
 /* ─────────── Hero ─────────── */
 .lp-hero {
   position: relative;
-  padding: 72px 24px 0;
+  padding: 20px 24px 0;
   background:
     radial-gradient(circle at 12% -20%, rgba(26, 115, 232, 0.16), transparent 46%),
     radial-gradient(circle at 100% 0%, rgba(123, 174, 249, 0.16), transparent 42%),
     var(--bg);
 }
+/* Banner institucional a todo el ancho: la imagen se adapta al ancho completo
+   (alto automático), sin recorte. Rompe el padding lateral para llegar a los bordes. */
+.lp-hero__stage {
+  position: relative; /* contexto para superponer la tarjeta sobre el banner */
+  margin: 0 -24px; /* full-bleed: rompe el padding lateral del hero */
+}
+.lp-hero__banner {
+  line-height: 0;
+}
+.lp-hero__banner picture {
+  display: block;
+}
+.lp-hero__banner img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Reserva la altura correcta antes de cargar (evita saltos de layout).
+     Cada aspect-ratio coincide con la imagen que elige <picture> a ese ancho. */
+  aspect-ratio: 4224 / 992;
+}
+@media (max-width: 2560px) {
+  .lp-hero__banner img { aspect-ratio: 3776 / 1120; }
+}
+@media (max-width: 1920px) {
+  .lp-hero__banner img { aspect-ratio: 3296 / 1280; }
+}
+@media (max-width: 1703px) {
+  .lp-hero__banner img { aspect-ratio: 3104 / 1376; }
+}
+@media (max-width: 1216px) {
+  .lp-hero__banner img { aspect-ratio: 2592 / 1632; }
+}
 .lp-hero__inner {
+  /* Tarjeta superpuesta y centrada verticalmente DENTRO del alto del banner. */
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   max-width: var(--lp-max);
   margin: 0 auto;
+  padding: 0 24px;
   display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
-  gap: 56px;
+  grid-template-columns: 1fr;
   align-items: center;
 }
 .lp-eyebrow {
@@ -331,47 +359,12 @@ html {
   font-weight: 600;
 }
 
-/* Barra de estadísticas */
-.lp-stats {
-  max-width: var(--lp-max);
-  margin: 64px auto 0;
-  transform: translateY(50%);
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1px;
-  background: var(--border);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-md);
-}
-.lp-stat {
-  background: var(--surface);
-  padding: 22px 24px;
-  text-align: center;
-}
-.lp-stat__value {
-  font-family: "Google Sans", sans-serif;
-  font-size: 30px;
-  font-weight: 600;
-  color: var(--accent);
-  line-height: 1;
-}
-.lp-stat__label {
-  margin-top: 6px;
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
 /* ─────────── Secciones ─────────── */
 .lp-section {
   max-width: var(--lp-max);
   margin: 0 auto;
   padding: 96px 24px;
   scroll-margin-top: var(--lp-nav-h);
-}
-.lp-section:first-of-type {
-  padding-top: 140px; /* deja espacio a la barra de stats flotante */
 }
 .lp-section--soft {
   max-width: none;
@@ -794,21 +787,16 @@ html {
     margin-left: auto;
   }
   .lp-hero__inner {
-    grid-template-columns: 1fr;
-    gap: 40px;
+    /* El banner es más bajo aquí: la tarjeta se apila debajo, sin superponer. */
+    position: static;
+    padding: 0;
+    margin: 28px auto 0;
   }
   .lp-hero__card {
     justify-content: flex-start;
   }
   .lp-adm {
     max-width: none;
-  }
-  .lp-stats {
-    grid-template-columns: repeat(2, 1fr);
-    transform: translateY(40px);
-  }
-  .lp-section:first-of-type {
-    padding-top: 120px;
   }
   .lp-footer__inner {
     grid-template-columns: 1fr 1fr;
@@ -834,9 +822,6 @@ html {
   }
   .lp-hero__cta .lp-btn {
     width: 100%;
-  }
-  .lp-stats {
-    grid-template-columns: 1fr 1fr;
   }
   .lp-section {
     padding: 64px 20px;

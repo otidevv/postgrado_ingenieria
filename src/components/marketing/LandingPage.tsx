@@ -23,13 +23,6 @@ const NAV_LINKS = [
   { href: "#contacto", label: "Contacto" },
 ];
 
-const STATS: { value: string; label: string }[] = [
-  { value: "6", label: "Programas de posgrado" },
-  { value: "+40", label: "Docentes investigadores" },
-  { value: "15", label: "Años formando profesionales" },
-  { value: "+1200", label: "Egresados en la región" },
-];
-
 type Program = {
   icon: IconName;
   title: string;
@@ -139,7 +132,14 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
       <header className="lp-nav">
         <div className="lp-nav__inner">
           <a href="#top" className="lp-brand">
-            <span className="lp-brand__mark">U</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logos/logo_unamad.png"
+              alt="Escudo de la Universidad Nacional Amazónica de Madre de Dios"
+              className="lp-brand__logo"
+              width={44}
+              height={44}
+            />
             <span className="lp-brand__text">
               <span className="lp-brand__name">UNAMAD</span>
               <span className="lp-brand__sub">Escuela de Posgrado · Ingeniería</span>
@@ -202,39 +202,30 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
         )}
       </header>
 
-      {/* ─────────── Hero ─────────── */}
+      {/* ─────────── Hero (banner institucional a todo el ancho) ─────────── */}
       <section className="lp-hero" id="top">
-        <div className="lp-hero__inner">
-          <div className="lp-hero__copy">
-            <span className="lp-eyebrow">
-              <span className="lp-eyebrow__dot" />
-              Admisión 2026-II · Vacantes abiertas
-            </span>
-            <h1 className="lp-hero__title">
-              Forma la próxima generación de ingenieros e investigadores de la
-              Amazonía
-            </h1>
-            <p className="lp-hero__lead">
-              Programas de maestría y doctorado con investigación aplicada,
-              plana docente doctoral y modalidades flexibles pensadas para
-              profesionales que trabajan.
-            </p>
-            <div className="lp-hero__cta">
-              <a href="#programas" className="lp-btn lp-btn--primary lp-btn--lg">
-                Explorar programas
-                <Icon name="chevron-right" size={18} />
-              </a>
-              <Link href="/login" className="lp-btn lp-btn--ghost lp-btn--lg">
-                <Icon name="lock" size={18} />
-                Acceder al portal
-              </Link>
-            </div>
-            <p className="lp-hero__note">
-              ¿Ya eres estudiante o docente? Ingresa con tu cuenta institucional
-              al portal académico.
-            </p>
-          </div>
+        {/* El "stage" toma el alto de la imagen; la tarjeta se superpone dentro. */}
+        <div className="lp-hero__stage">
+          <figure className="lp-hero__banner">
+          {/* Art direction: cada tamaño está compuesto para un ancho de ventana
+              distinto (más angosto = más alto). El navegador elige el primero
+              cuyo `media` coincida; el <img> es el respaldo para pantallas grandes. */}
+          <picture>
+            <source media="(max-width: 1216px)" srcSet="/banner/1216.webp" />
+            <source media="(max-width: 1703px)" srcSet="/banner/1703.webp" />
+            <source media="(max-width: 1920px)" srcSet="/banner/1920.webp" />
+            <source media="(max-width: 2560px)" srcSet="/banner/2560.webp" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/banner/3000.webp"
+              alt="Posgrado en Ingeniería · Universidad Nacional Amazónica de Madre de Dios"
+              width={4224}
+              height={992}
+            />
+          </picture>
+        </figure>
 
+        <div className="lp-hero__inner">
           <aside className="lp-hero__card" aria-label="Próxima admisión">
             <div className="lp-adm">
               <div className="lp-adm__head">
@@ -268,15 +259,6 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
             </div>
           </aside>
         </div>
-
-        {/* Barra de estadísticas */}
-        <div className="lp-stats">
-          {STATS.map((s) => (
-            <div key={s.label} className="lp-stat">
-              <div className="lp-stat__value">{s.value}</div>
-              <div className="lp-stat__label">{s.label}</div>
-            </div>
-          ))}
         </div>
       </section>
 
@@ -436,7 +418,14 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
         <div className="lp-footer__inner">
           <div className="lp-footer__brand">
             <div className="lp-brand">
-              <span className="lp-brand__mark">U</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logos/logo_unamad.png"
+                alt="Escudo de la Universidad Nacional Amazónica de Madre de Dios"
+                className="lp-brand__logo"
+                width={44}
+                height={44}
+              />
               <span className="lp-brand__text">
                 <span className="lp-brand__name">UNAMAD</span>
                 <span className="lp-brand__sub">Escuela de Posgrado</span>
