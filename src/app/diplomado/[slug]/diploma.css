@@ -691,20 +691,28 @@ html[data-theme="dark"] .dp {
 .dp-course.is-open .dp-course__toggle svg {
   transform: rotate(180deg);
 }
+/* El detalle vive siempre en el DOM: el alto se anima con la técnica de
+   grid-template-rows 0fr → 1fr (sin medir alturas con JS). */
+.dp-course__detailwrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dp-course.is-open .dp-course__detailwrap {
+  grid-template-rows: 1fr;
+}
 .dp-course__detail {
   /* alinea con el título: thumb (112) + gap (18) + padding fila (22) */
   padding: 0 22px 20px 152px;
-  animation: dpFade 0.16s ease-out;
+  overflow: hidden;
+  min-height: 0;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.28s ease 0.06s, transform 0.28s ease 0.06s;
 }
-@keyframes dpFade {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+.dp-course.is-open .dp-course__detail {
+  opacity: 1;
+  transform: none;
 }
 .dp-course__summary {
   font-size: 14px;
@@ -1001,6 +1009,102 @@ html[data-theme="dark"] .dp {
   .dp-robot {
     display: none;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Animación y transiciones
+   Entrada escalonada del hero (CSS puro: la página es server
+   component), tarjeta de stats, reveals al hacer scroll (via
+   RevealEffect) y micro-interacciones. El kill-switch global de
+   prefers-reduced-motion (arriba) neutraliza todo.
+   ══════════════════════════════════════════════════════════════ */
+
+@keyframes dp-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+@keyframes dp-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Hero: los bloques entran en cascada (crumbs → título → … → nota) */
+.dp-hero__main > * {
+  animation: dp-rise-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.dp-hero__main > *:nth-child(1) { animation-delay: 0s; }
+.dp-hero__main > *:nth-child(2) { animation-delay: 0.06s; }
+.dp-hero__main > *:nth-child(3) { animation-delay: 0.12s; }
+.dp-hero__main > *:nth-child(4) { animation-delay: 0.18s; }
+.dp-hero__main > *:nth-child(5) { animation-delay: 0.24s; }
+.dp-hero__main > *:nth-child(6) { animation-delay: 0.3s; }
+.dp-hero__main > *:nth-child(7) { animation-delay: 0.36s; }
+.dp-hero__main > *:nth-child(8) { animation-delay: 0.42s; }
+
+/* Decoración: el anillo aparece y el escudo flota suavemente en su hueco */
+.dp-hero__decor {
+  animation: dp-fade-in 0.9s ease-out 0.2s both;
+}
+.dp-hero__decor-logo {
+  animation:
+    dp-fade-in 0.9s ease-out 0.35s both,
+    dp-float 7s ease-in-out 1.6s infinite alternate;
+}
+@keyframes dp-float {
+  to {
+    transform: translate(-50%, calc(-50% - 10px));
+  }
+}
+
+/* Tarjeta de stats: entra después del hero */
+.dp-statcard {
+  animation: dp-rise-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
+}
+
+/* Reveal al hacer scroll (RevealEffect). El ocultamiento solo aplica
+   con scripting activo: sin JS nada queda invisible. */
+@media (scripting: enabled) {
+  .dp [data-reveal] {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+.dp [data-reveal] {
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dp [data-reveal].is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Micro-interacciones */
+.dp-fee {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s,
+    border-color 0.25s;
+}
+.dp-fee:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong);
+}
+.dp-cta-btn:hover {
+  transform: translateY(-1px);
+}
+.dp-nav__back-ic {
+  transition: transform 0.18s;
+}
+.dp-nav__back:hover .dp-nav__back-ic {
+  transform: rotate(180deg) translateX(2px);
+}
+.dp-tabs__apply svg {
+  transition: transform 0.18s;
+}
+.dp-tabs__apply:hover svg {
+  transform: translateX(2px);
 }
 
 /* Footer */

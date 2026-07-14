@@ -21,7 +21,7 @@ export function ModuleAccordion({ modules }: { modules: CourseModule[] }) {
   const [openId, setOpenId] = useState<string | null>(modules[0]?.id ?? null);
 
   return (
-    <div className="dp-curriculum">
+    <div className="dp-curriculum" data-reveal>
       {modules.map((m) => {
         const isOpen = openId === m.id;
         return (
@@ -47,7 +47,10 @@ export function ModuleAccordion({ modules }: { modules: CourseModule[] }) {
               </span>
             </button>
 
-            {isOpen && (
+            {/* Siempre montado: el alto se anima con grid-template-rows
+                (0fr → 1fr), sin medir alturas. aria-hidden lo saca del
+                árbol accesible cuando está plegado. */}
+            <div className="dp-course__detailwrap" aria-hidden={!isOpen}>
               <div className="dp-course__detail">
                 <p className="dp-course__summary">{m.summary}</p>
                 {m.topics.length > 0 && (
@@ -62,7 +65,7 @@ export function ModuleAccordion({ modules }: { modules: CourseModule[] }) {
                   {m.code}
                 </div>
               </div>
-            )}
+            </div>
           </div>
         );
       })}

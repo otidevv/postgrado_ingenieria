@@ -5,7 +5,7 @@
    ══════════════════════════════════════════════════════════════ */
 
 .lp {
-  --lp-nav-h: 68px;
+  --lp-nav-h: 84px; /* alto total del header flotante (padding + píldora) */
   --lp-max: 1180px;
   font-family: "Google Sans Text", "Roboto", system-ui, sans-serif;
   color: var(--text);
@@ -47,23 +47,27 @@ html {
   color: var(--text-muted);
 }
 
-/* ─────────── Navegación ─────────── */
+/* ─────────── Navegación (píldora flotante) ─────────── */
 .lp-nav {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: color-mix(in srgb, var(--bg) 85%, transparent);
-  backdrop-filter: saturate(180%) blur(12px);
-  border-bottom: 1px solid var(--border);
+  padding: 10px 16px; /* aire alrededor: la barra "flota" */
+  background: transparent;
 }
 .lp-nav__inner {
   max-width: var(--lp-max);
   margin: 0 auto;
-  height: var(--lp-nav-h);
-  padding: 0 24px;
+  height: 64px;
+  padding: 0 10px 0 18px;
   display: flex;
   align-items: center;
   gap: 24px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  backdrop-filter: saturate(180%) blur(14px);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-sm);
 }
 .lp-nav__links {
   display: flex;
@@ -111,13 +115,20 @@ html {
 .lp-nav__burger {
   display: none;
 }
+/* Panel móvil: tarjeta flotante bajo la píldora (overlay, no empuja) */
 .lp-nav__mobile {
   display: none;
   flex-direction: column;
   gap: 4px;
-  padding: 12px 16px 18px;
-  border-top: 1px solid var(--border);
-  background: var(--bg);
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: calc(100% - 2px);
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
 }
 .lp-nav__mobile-link {
   padding: 12px 14px;
@@ -197,7 +208,8 @@ html {
 /* ─────────── Hero ─────────── */
 .lp-hero {
   position: relative;
-  padding: 20px 24px 0;
+  /* Sin padding-top: el banner queda al ras del header (sin franja). */
+  padding: 0 24px;
   background:
     radial-gradient(circle at 12% -20%, rgba(26, 115, 232, 0.16), transparent 46%),
     radial-gradient(circle at 100% 0%, rgba(123, 174, 249, 0.16), transparent 42%),
@@ -224,16 +236,16 @@ html {
   aspect-ratio: 4224 / 992;
 }
 @media (max-width: 2560px) {
-  .lp-hero__banner img { aspect-ratio: 3776 / 1120; }
+  .lp-hero__banner img { aspect-ratio: 1983 / 793; }
 }
 @media (max-width: 1920px) {
-  .lp-hero__banner img { aspect-ratio: 3296 / 1280; }
+  .lp-hero__banner img { aspect-ratio: 2077 / 757; }
 }
-@media (max-width: 1703px) {
-  .lp-hero__banner img { aspect-ratio: 3104 / 1376; }
+@media (max-width: 1763px) {
+  .lp-hero__banner img { aspect-ratio: 1989 / 790; }
 }
 @media (max-width: 1216px) {
-  .lp-hero__banner img { aspect-ratio: 2592 / 1632; }
+  .lp-hero__banner img { aspect-ratio: 1697 / 927; }
 }
 .lp-hero__inner {
   /* Tarjeta superpuesta y centrada verticalmente DENTRO del alto del banner. */
@@ -357,6 +369,74 @@ html {
 .lp-adm__list b {
   color: var(--text);
   font-weight: 600;
+}
+
+/* ─────────── Herramientas (carrusel de marcas) ─────────── */
+.lp-tools {
+  padding: 36px 0 8px;
+}
+.lp-tools__label {
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-faint);
+  margin: 0 0 20px;
+  padding: 0 24px;
+}
+.lp-tools__marquee {
+  display: flex;
+  overflow: hidden;
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 8%,
+    #000 92%,
+    transparent
+  );
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.lp-tools__track {
+  flex: none;
+  min-width: max-content;
+  display: flex;
+  align-items: center;
+  gap: 56px;
+  list-style: none;
+  margin: 0;
+  padding: 0 56px 0 0; /* el hueco final hace continuo el bucle */
+  animation: lp-marquee 30s linear infinite;
+}
+.lp-tools__marquee:hover .lp-tools__track {
+  animation-play-state: paused; /* pausa al pasar el cursor */
+}
+@keyframes lp-marquee {
+  to {
+    transform: translateX(-100%);
+  }
+}
+.lp-tools__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "Google Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  filter: grayscale(0.6);
+  opacity: 0.75;
+  transition: filter 0.2s, opacity 0.2s;
+}
+.lp-tools__item:hover {
+  filter: none;
+  opacity: 1;
+}
+.lp-tools__item img {
+  display: block;
 }
 
 /* ─────────── Secciones ─────────── */
@@ -664,6 +744,8 @@ html {
   padding: 0 24px 96px;
 }
 .lp-cta__inner {
+  position: relative; /* contexto del mapa holograma de fondo */
+  overflow: hidden;
   max-width: var(--lp-max);
   margin: 0 auto;
   border-radius: 28px;
@@ -674,6 +756,19 @@ html {
     radial-gradient(circle at 15% 0%, rgba(255, 255, 255, 0.18), transparent 45%),
     linear-gradient(135deg, #1a73e8, #4285f4 55%, #7baef9);
   box-shadow: var(--shadow-lg);
+}
+/* Contenido por encima del mapa (el canvas queda en z 0) */
+.lp-cta__inner > :not(.lp-cta__map) {
+  position: relative;
+  z-index: 1;
+}
+.lp-cta__map {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 .lp-cta__inner h2 {
   font-family: "Google Sans", sans-serif;
@@ -771,6 +866,13 @@ html {
    Responsive
    ══════════════════════════════════════════════════════════════ */
 @media (max-width: 960px) {
+  .lp-nav {
+    padding: 8px 12px;
+  }
+  .lp-nav__mobile {
+    left: 12px;
+    right: 12px;
+  }
   .lp-nav__links {
     display: none;
   }
@@ -814,9 +916,6 @@ html {
 }
 
 @media (max-width: 560px) {
-  .lp-hero {
-    padding-top: 48px;
-  }
   .lp-hero__cta {
     flex-direction: column;
   }
@@ -862,5 +961,173 @@ html {
 @media (max-width: 1200px) {
   .lp-robot {
     display: none;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Animación y transiciones
+   Un momento orquestado al cargar (banner + tarjeta de admisión),
+   reveals al hacer scroll y micro-interacciones puntuales.
+   - `prefers-reduced-motion` desactiva todo el movimiento.
+   - El ocultamiento del reveal solo aplica con scripting activo:
+     sin JS nada queda invisible.
+   ══════════════════════════════════════════════════════════════ */
+
+/* Entrada del hero al cargar */
+@keyframes lp-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes lp-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+}
+.lp-hero__banner {
+  animation: lp-fade-in 0.8s ease-out both;
+}
+.lp-adm {
+  animation: lp-rise-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+
+/* Reveal al hacer scroll (IntersectionObserver en LandingPage.tsx) */
+@media (scripting: enabled) {
+  .lp [data-reveal] {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+.lp [data-reveal] {
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.lp [data-reveal].is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Micro-interacciones */
+.lp-feature {
+  transition: box-shadow 0.16s, border-color 0.16s, transform 0.16s;
+}
+.lp-feature:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong);
+  transform: translateY(-3px);
+}
+.lp-program__link {
+  transition: gap 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.lp-step__num {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.lp-step:hover .lp-step__num {
+  transform: scale(1.06);
+}
+.lp-icon-btn[aria-label="Cambiar tema"] svg {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.lp-icon-btn[aria-label="Cambiar tema"]:hover svg {
+  transform: rotate(24deg);
+}
+@keyframes lp-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+.lp-nav__mobile {
+  animation: lp-menu-in 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Navbar: condensado al hacer scroll + scrollspy ──
+   Arriba del todo respira (68px, fondo translúcido); con scroll se
+   compacta (58px, logo 36px), afirma el fondo y gana elevación. El
+   link de la sección visible usa el mismo patrón activo del panel
+   admin (accent + accent-soft): un solo sistema. */
+.lp-nav__inner {
+  transition: height 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.25s ease, box-shadow 0.25s ease;
+}
+.lp-nav.is-scrolled .lp-nav__inner {
+  height: 56px;
+  background: color-mix(in srgb, var(--surface) 97%, transparent);
+  box-shadow: var(--shadow-md);
+}
+.lp-brand__logo {
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.lp-nav.is-scrolled .lp-brand__logo {
+  width: 36px;
+  height: 36px;
+}
+.lp-nav__link.is-active {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.lp-nav a:focus-visible,
+.lp-nav button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Menú móvil: los items entran escalonados bajo el panel */
+@keyframes lp-menu-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+.lp-nav__mobile > * {
+  animation: lp-menu-item-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.lp-nav__mobile > *:nth-child(1) { animation-delay: 0.03s; }
+.lp-nav__mobile > *:nth-child(2) { animation-delay: 0.06s; }
+.lp-nav__mobile > *:nth-child(3) { animation-delay: 0.09s; }
+.lp-nav__mobile > *:nth-child(4) { animation-delay: 0.12s; }
+.lp-nav__mobile > *:nth-child(5) { animation-delay: 0.15s; }
+.lp-nav__mobile > *:nth-child(6) { animation-delay: 0.18s; }
+
+/* Accesibilidad: sin movimiento si el usuario lo pide */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .lp-hero__banner,
+  .lp-adm,
+  .lp-nav__mobile,
+  .lp-nav__mobile > * {
+    animation: none;
+  }
+  /* Marquee estático: una sola pista, envuelta y centrada */
+  .lp-tools__track {
+    animation: none;
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 14px;
+  }
+  .lp-tools__track[aria-hidden="true"] {
+    display: none;
+  }
+  .lp-nav,
+  .lp-nav__inner,
+  .lp-brand__logo {
+    transition: none;
+  }
+  .lp [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .lp-dip,
+  .lp-program,
+  .lp-feature,
+  .lp-step__num,
+  .lp-icon-btn[aria-label="Cambiar tema"] svg {
+    transition: none;
   }
 }

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/admin/Icon";
+import { HologramMap } from "@/components/HologramMap";
 import { Robot3D } from "@/components/Robot3D";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { THEME_KEY } from "@/lib/ui/theme";
@@ -16,9 +17,11 @@ import "./landing.css";
    Escuela de Posgrado debe confirmar.
    ──────────────────────────────────────────────────────────────── */
 
+/* En el mismo orden que las secciones de la página: así el resaltado
+   del scrollspy avanza siempre hacia adelante al bajar. */
 const NAV_LINKS = [
-  { href: "#programas", label: "Programas" },
   { href: "#diplomados", label: "Diplomados" },
+  { href: "#programas", label: "Programas" },
   { href: "#ventajas", label: "Por qué elegirnos" },
   { href: "#admision", label: "Admisión" },
   { href: "#contacto", label: "Contacto" },
@@ -73,6 +76,20 @@ const FEATURES: { icon: IconName; title: string; desc: string }[] = [
   },
 ];
 
+/* Herramientas que usa la Escuela en formación y gestión. Lista editable:
+   iconos en /public/logos/tools (Simple Icons, CC0). Confirmar con la
+   oficina qué herramientas de IA se muestran. */
+const TOOLS: { name: string; file: string }[] = [
+  { name: "Google Meet", file: "googlemeet.svg" },
+  { name: "Google Classroom", file: "googleclassroom.svg" },
+  { name: "Google Drive", file: "googledrive.svg" },
+  { name: "Gmail", file: "gmail.svg" },
+  { name: "Google Calendar", file: "googlecalendar.svg" },
+  { name: "Google Docs", file: "googledocs.svg" },
+  { name: "Gemini", file: "googlegemini.svg" },
+  { name: "Claude", file: "claude.svg" },
+];
+
 const STEPS: { title: string; desc: string }[] = [
   { title: "Inscripción", desc: "Completa tu ficha y sube tus documentos en línea." },
   { title: "Evaluación", desc: "Revisión de expediente y entrevista personal." },
@@ -82,10 +99,119 @@ const STEPS: { title: string; desc: string }[] = [
 
 export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [dark, setDark] = useState(false);
 
+  /* Tema actual leído de <html data-theme> como "external store": se
+     re-renderiza solo cuando el atributo cambia. */
+  const dark = useSyncExternalStore(
+    (onChange) => {
+      const obs = new MutationObserver(onChange);
+      obs.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["data-theme"],
+      });
+      return () => obs.disconnect();
+    },
+    () => document.documentElement.dataset.theme === "dark",
+    () => false,
+  );
+
+  /* Nav condensado con HISTÉRESIS: se compacta pasados 32px y solo se
+     expande de vuelta bajo 6px. La zona muerta (26px) supera el cambio de
+     alto del nav (10px): así el ajuste de scroll-anchoring del navegador
+     no puede re-cruzar el umbral y provocar un bucle de temblor al llegar
+     arriba. */
+  const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
-    setDark(document.documentElement.dataset.theme === "dark");
+    let current = false;
+    const onScroll = () => {
+      const y = window.scrollY;
+      const next = current ? y > 6 : y > 32;
+      if (next !== current) {
+        current = next;
+        setScrolled(next);
+      }
+    };
+    // Estado inicial (p. ej. carga con ancla), fuera del cuerpo del efecto.
+    const raf = requestAnimationFrame(onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
+  /* Scrollspy: resalta en el nav la sección visible (franja central del
+     viewport). Orientación constante sin ruido. */
+  const [activeSection, setActiveSection] = useState("");
+  useEffect(() => {
+    const sections = NAV_LINKS.map((l) =>
+      document.getElementById(l.href.slice(1)),
+    ).filter((s): s is HTMLElement => s !== null);
+    if (!sections.length || !("IntersectionObserver" in window)) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting);
+        if (visible.length) setActiveSection(visible[0].target.id);
+      },
+      { rootMargin: "-45% 0px -50% 0px", threshold: 0 },
+    );
+    sections.forEach((s) => io.observe(s));
+    return () => io.disconnect();
+  }, []);
+
+  /* Menú móvil: Escape lo cierra. */
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
+  /* Reveal al hacer scroll: los [data-reveal] aparecen al entrar en
+     pantalla, con escalonado dentro de cada [data-reveal-group]. Respeta
+     prefers-reduced-motion; sin JS el CSS no oculta nada (ver landing.css). */
+  useEffect(() => {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const targets = Array.from(
+      document.querySelectorAll<HTMLElement>(".lp [data-reveal]"),
+    );
+    if (reduce || !("IntersectionObserver" in window)) {
+      targets.forEach((el) => el.classList.add("is-in"));
+      return;
+    }
+    document
+      .querySelectorAll<HTMLElement>(".lp [data-reveal-group]")
+      .forEach((group) => {
+        Array.from(group.children).forEach((child, i) => {
+          (child as HTMLElement).style.transitionDelay = `${i * 0.07}s`;
+        });
+      });
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const el = entry.target as HTMLElement;
+          el.classList.add("is-in");
+          // El retraso del escalonado solo vale para la entrada: se limpia
+          // al terminar para no retrasar las transiciones de hover.
+          if (el.style.transitionDelay) {
+            el.addEventListener(
+              "transitionend",
+              () => {
+                el.style.transitionDelay = "";
+              },
+              { once: true },
+            );
+          }
+          io.unobserve(el);
+        });
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -8% 0px" },
+    );
+    targets.forEach((el) => io.observe(el));
+    return () => io.disconnect();
   }, []);
 
   const toggleTheme = () => {
@@ -97,13 +223,13 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
     } catch {
       /* almacenamiento no disponible */
     }
-    setDark(next === "dark");
+    /* `dark` se actualiza solo vía el MutationObserver de arriba. */
   };
 
   return (
     <div className="lp">
       {/* ─────────── Navegación ─────────── */}
-      <header className="lp-nav">
+      <header className={`lp-nav${scrolled ? " is-scrolled" : ""}`}>
         <div className="lp-nav__inner">
           <a href="#top" className="lp-brand">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -121,11 +247,19 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
           </a>
 
           <nav className="lp-nav__links" aria-label="Principal">
-            {NAV_LINKS.map((l) => (
-              <a key={l.href} href={l.href} className="lp-nav__link">
-                {l.label}
-              </a>
-            ))}
+            {NAV_LINKS.map((l) => {
+              const isActive = activeSection === l.href.slice(1);
+              return (
+                <a
+                  key={l.href}
+                  href={l.href}
+                  className={`lp-nav__link${isActive ? " is-active" : ""}`}
+                  aria-current={isActive ? "true" : undefined}
+                >
+                  {l.label}
+                </a>
+              );
+            })}
           </nav>
 
           <div className="lp-nav__actions">
@@ -186,7 +320,7 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
               cuyo `media` coincida; el <img> es el respaldo para pantallas grandes. */}
           <picture>
             <source media="(max-width: 1216px)" srcSet="/banner/1216.webp" />
-            <source media="(max-width: 1703px)" srcSet="/banner/1703.webp" />
+            <source media="(max-width: 1763px)" srcSet="/banner/1763.webp" />
             <source media="(max-width: 1920px)" srcSet="/banner/1920.webp" />
             <source media="(max-width: 2560px)" srcSet="/banner/2560.webp" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -236,10 +370,50 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
         </div>
       </section>
 
+      {/* ─────────── Herramientas (carrusel de marcas) ─────────── */}
+      <section className="lp-tools" aria-label="Herramientas que usa la Escuela">
+        <p className="lp-tools__label" data-reveal>
+          Formación y gestión con Google Workspace e IA
+        </p>
+        <div className="lp-tools__marquee">
+          <ul className="lp-tools__track">
+            {TOOLS.map((t) => (
+              <li key={t.name} className="lp-tools__item">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`/logos/tools/${t.file}`}
+                  alt=""
+                  width={22}
+                  height={22}
+                  loading="lazy"
+                />
+                <span>{t.name}</span>
+              </li>
+            ))}
+          </ul>
+          {/* Pista duplicada para el bucle continuo (solo visual) */}
+          <ul className="lp-tools__track" aria-hidden="true">
+            {TOOLS.map((t) => (
+              <li key={t.name} className="lp-tools__item">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`/logos/tools/${t.file}`}
+                  alt=""
+                  width={22}
+                  height={22}
+                  loading="lazy"
+                />
+                <span>{t.name}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
       {/* ─────────── Diplomados (datos reales de la BD) ─────────── */}
       {diplomas.length > 0 && (
         <section className="lp-section" id="diplomados">
-          <div className="lp-section__head">
+          <div className="lp-section__head" data-reveal>
             <span className="lp-kicker">Formación continua</span>
             <h2>Diplomados de posgrado</h2>
             <p>
@@ -248,9 +422,9 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
             </p>
           </div>
 
-          <div className="lp-dips">
+          <div className="lp-dips" data-reveal-group>
             {diplomas.map((d) => (
-              <article key={d.slug} className="lp-dip">
+              <article key={d.slug} className="lp-dip" data-reveal>
                 <div className="lp-dip__top">
                   <span className="lp-dip__tag">{d.subtitle ?? "Diplomado"}</span>
                   {d.admissionLabel && (
@@ -292,7 +466,7 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
 
       {/* ─────────── Programas ─────────── */}
       <section className="lp-section" id="programas">
-        <div className="lp-section__head">
+        <div className="lp-section__head" data-reveal>
           <span className="lp-kicker">Oferta académica</span>
           <h2>Programas de posgrado</h2>
           <p>
@@ -301,9 +475,9 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
           </p>
         </div>
 
-        <div className="lp-programs">
+        <div className="lp-programs" data-reveal-group>
           {PROGRAMS.map((p) => (
-            <article key={p.title} className="lp-program">
+            <article key={p.title} className="lp-program" data-reveal>
               <span className="lp-program__icon">
                 <Icon name={p.icon} size={24} />
               </span>
@@ -324,7 +498,7 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
 
       {/* ─────────── Ventajas ─────────── */}
       <section className="lp-section lp-section--soft" id="ventajas">
-        <div className="lp-section__head">
+        <div className="lp-section__head" data-reveal>
           <span className="lp-kicker">Por qué elegirnos</span>
           <h2>Una formación de posgrado con respaldo</h2>
           <p>
@@ -333,9 +507,9 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
           </p>
         </div>
 
-        <div className="lp-features">
+        <div className="lp-features" data-reveal-group>
           {FEATURES.map((f) => (
-            <div key={f.title} className="lp-feature">
+            <div key={f.title} className="lp-feature" data-reveal>
               <span className="lp-feature__icon">
                 <Icon name={f.icon} size={22} />
               </span>
@@ -348,7 +522,7 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
 
       {/* ─────────── Admisión ─────────── */}
       <section className="lp-section" id="admision">
-        <div className="lp-section__head">
+        <div className="lp-section__head" data-reveal>
           <span className="lp-kicker">Admisión</span>
           <h2>Cuatro pasos para postular</h2>
           <p>
@@ -357,9 +531,9 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
           </p>
         </div>
 
-        <ol className="lp-steps">
+        <ol className="lp-steps" data-reveal-group>
           {STEPS.map((s, i) => (
-            <li key={s.title} className="lp-step">
+            <li key={s.title} className="lp-step" data-reveal>
               <span className="lp-step__num">{i + 1}</span>
               <h3 className="lp-step__title">{s.title}</h3>
               <p className="lp-step__desc">{s.desc}</p>
@@ -370,7 +544,9 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
 
       {/* ─────────── CTA final ─────────── */}
       <section className="lp-cta">
-        <div className="lp-cta__inner">
+        <div className="lp-cta__inner" data-reveal>
+          {/* Mapa holograma decorativo (puntos), marcador en Puerto Maldonado */}
+          <HologramMap className="lp-cta__map" />
           <h2>¿Listo para dar el siguiente paso en tu carrera?</h2>
           <p>
             Postula al proceso de admisión 2026-II o accede al portal académico

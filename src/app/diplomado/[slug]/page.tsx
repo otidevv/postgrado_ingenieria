@@ -9,6 +9,7 @@ import { ModuleAccordion } from "./ModuleAccordion";
 import { Robot3D } from "@/components/Robot3D";
 import { SakuraPetals } from "@/components/SakuraPetals";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { RevealEffect } from "@/components/RevealEffect";
 import "./diploma.css";
 
 // Ruta 100% dependiente de la BD: no intentar prerender/generación estática.
@@ -55,6 +56,9 @@ export default async function DiplomaPage({ params }: Params) {
     <div className="dp">
       {/* Lluvia de pétalos de sakura al entrar al diplomado */}
       <SakuraPetals />
+
+      {/* Reveals al hacer scroll para los [data-reveal] de esta página */}
+      <RevealEffect root=".dp" />
 
       {/* Header */}
       <header className="dp-nav">
@@ -193,10 +197,10 @@ export default async function DiplomaPage({ params }: Params) {
       <main className="dp-main">
         {/* Acerca de */}
         <section id="acerca" className="dp-sec">
-          <h2 className="dp-h2">Acerca del diplomado</h2>
-          <p className="dp-prose">{d.description}</p>
+          <h2 className="dp-h2" data-reveal>Acerca del diplomado</h2>
+          <p className="dp-prose" data-reveal>{d.description}</p>
 
-          <div className="dp-callout">
+          <div className="dp-callout" data-reveal>
             <span className="dp-callout__ic">
               <Icon name="sparkle" size={20} />
             </span>
@@ -208,10 +212,10 @@ export default async function DiplomaPage({ params }: Params) {
 
           {d.objectives.length > 0 && (
             <>
-              <h3 className="dp-h3">Lo que aprenderás</h3>
-              <ul className="dp-learn">
+              <h3 className="dp-h3" data-reveal>Lo que aprenderás</h3>
+              <ul className="dp-learn" data-reveal-group>
                 {d.objectives.map((o, i) => (
-                  <li key={i}>
+                  <li key={i} data-reveal>
                     <Icon name="check" size={16} />
                     <span>{o}</span>
                   </li>
@@ -223,8 +227,8 @@ export default async function DiplomaPage({ params }: Params) {
 
         {/* Plan de estudios */}
         <section id="plan" className="dp-sec">
-          <h2 className="dp-h2">Plan de estudios</h2>
-          <p className="dp-sec__lead">
+          <h2 className="dp-h2" data-reveal>Plan de estudios</h2>
+          <p className="dp-sec__lead" data-reveal>
             {moduleCount} módulos · {d.totalHours} horas · {d.credits} créditos.
             Cada módulo dura {d.weeksPerModule} semanas, con clases{" "}
             {d.schedule.toLowerCase()}.
@@ -247,7 +251,7 @@ export default async function DiplomaPage({ params }: Params) {
                 }))}
               />
 
-              <div className="dp-cert">
+              <div className="dp-cert" data-reveal>
                 <span className="dp-cert__ic">
                   <Icon name="award" size={26} />
                 </span>
@@ -263,7 +267,7 @@ export default async function DiplomaPage({ params }: Params) {
             </div>
 
             <aside className="dp-plan__side">
-              <div className="dp-side-card">
+              <div className="dp-side-card" data-reveal>
                 {d.instructors.length > 0 && (
                   <>
                     <h3 className="dp-side__h">
@@ -316,8 +320,8 @@ export default async function DiplomaPage({ params }: Params) {
 
         {/* Perfil y requisitos */}
         <section id="perfil" className="dp-sec">
-          <div className="dp-cols">
-            <div>
+          <div className="dp-cols" data-reveal-group>
+            <div data-reveal>
               <h2 className="dp-h2">Perfil del egresado</h2>
               <ul className="dp-list">
                 {d.graduateProfile.map((g, i) => (
@@ -328,7 +332,7 @@ export default async function DiplomaPage({ params }: Params) {
                 ))}
               </ul>
             </div>
-            <div>
+            <div data-reveal>
               <h2 className="dp-h2">Requisitos del postulante</h2>
               <ul className="dp-list">
                 {d.requirements.map((r, i) => (
@@ -344,25 +348,25 @@ export default async function DiplomaPage({ params }: Params) {
 
         {/* Inversión */}
         <section id="inversion" className="dp-sec">
-          <h2 className="dp-h2">Inversión</h2>
-          <div className="dp-fees">
-            <div className="dp-fee">
+          <h2 className="dp-h2" data-reveal>Inversión</h2>
+          <div className="dp-fees" data-reveal-group>
+            <div className="dp-fee" data-reveal>
               <span className="dp-fee__label">Matrícula</span>
               <span className="dp-fee__value">{soles(d.enrollmentFee)}</span>
               <span className="dp-fee__note">Pago único al inicio</span>
             </div>
-            <div className="dp-fee">
+            <div className="dp-fee" data-reveal>
               <span className="dp-fee__label">Por módulo</span>
               <span className="dp-fee__value">{soles(d.moduleFee)}</span>
               <span className="dp-fee__note">{moduleCount} módulos en total</span>
             </div>
-            <div className="dp-fee">
+            <div className="dp-fee" data-reveal>
               <span className="dp-fee__label">Certificación</span>
               <span className="dp-fee__value">{soles(d.certificationFee)}</span>
               <span className="dp-fee__note">Por participante</span>
             </div>
           </div>
-          <p className="dp-fees__foot">
+          <p className="dp-fees__foot" data-reveal>
             <Icon name="info" size={15} />
             Vacantes limitadas · se requiere un mínimo de {d.minEnrollment}{" "}
             matriculados para aperturar el programa.
@@ -370,7 +374,7 @@ export default async function DiplomaPage({ params }: Params) {
         </section>
 
         {/* CTA final */}
-        <section className="dp-cta-final">
+        <section className="dp-cta-final" data-reveal>
           <h2>¿Listo para postular al diplomado?</h2>
           <p>
             Completa tu inscripción en línea o accede al portal académico con tu
