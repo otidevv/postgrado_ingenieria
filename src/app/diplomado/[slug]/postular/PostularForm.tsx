@@ -1,11 +1,19 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
+import { Toaster, toast } from "sonner";
 import { Icon } from "@/components/admin/Icon";
 import {
   ACADEMIC_DEGREES,
   ACCEPT_ATTR,
+  ACCEPTED_MIME,
   DOC_TYPES,
   DOCUMENT_SLOTS,
   GENDERS,
@@ -15,6 +23,21 @@ import {
 } from "@/lib/applications";
 import { submitApplication } from "./actions";
 import "./postular.css";
+
+/** Sigue el tema claro/oscuro del sitio (html[data-theme]) para el Toaster. */
+function useSiteTheme(): "light" | "dark" {
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  useEffect(() => {
+    const el = document.documentElement;
+    const read = () =>
+      setTheme(el.getAttribute("data-theme") === "dark" ? "dark" : "light");
+    read();
+    const obs = new MutationObserver(read);
+    obs.observe(el, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => obs.disconnect();
+  }, []);
+  return theme;
+}
 
 export function PostularForm({
   slug,
@@ -29,6 +52,7 @@ export function PostularForm({
     submitApplication,
     INITIAL_SUBMIT_STATE,
   );
+  const theme = useSiteTheme();
 
   // ── Autocompletado por DNI (consulta a la API institucional vía /api/dni) ──
   const [docType, setDocType] = useState("DNI");
@@ -52,6 +76,7 @@ export function PostularForm({
   } | null>(null);
   const lastDni = useRef("");
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   async function lookupDni(value: string) {
     if (docType !== "DNI" || !/^\d{8}$/.test(value)) return;
@@ -62,10 +87,9 @@ export function PostularForm({
       const res = await fetch(`/api/dni/${value}`);
       const data = await res.json();
       if (!res.ok) {
-        setDniLookup({
-          status: "error",
-          message: data?.error ?? "No se pudo consultar el DNI.",
-        });
+        const message = data?.error ?? "No se pudo consultar el DNI.";
+        setDniLookup({ status: "error", message });
+        toast.error("Consulta de DNI", { description: message });
         return;
       }
       // Autocompleta los campos y muestra un modal informativo.
@@ -84,10 +108,9 @@ export function PostularForm({
       });
       setDniLookup({ status: "idle" });
     } catch {
-      setDniLookup({
-        status: "error",
-        message: "No se pudo conectar con el servicio de consulta.",
-      });
+      const message = "No se pudo conectar con el servicio de consulta.";
+      setDniLookup({ status: "error", message });
+      toast.error("Consulta de DNI", { description: message });
     }
   }
 
@@ -99,48 +122,112 @@ export function PostularForm({
     });
   }
 
-  // Abre un modal cuando el envío falla con un error de negocio/servidor.
+  // Envío manual del Server Action: al despachar la acción con FormData
+  // (en lugar de dejar que React procese <form action>), React NO resetea
+  // los campos no controlados, así el postulante no pierde lo escrito
+  // (correo, teléfono, archivos…) cuando hay errores de validación.
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (pending) return;
+    const fd = new FormData(e.currentTarget);
+    startTransition(() => formAction(fd));
+  }
+
+  // Reacciona al resultado del envío: modal para errores de negocio,
+  // toast + scroll al primer campo inválido para errores de validación,
+  // toast de confirmación en el éxito.
   useEffect(() => {
-    if (state.status === "error" && state.modal) setShowErrorModal(true);
+    if (state.status === "error") {
+      if (state.modal) {
+        setShowErrorModal(true);
+        return;
+      }
+      const n = Object.keys(state.fieldErrors ?? {}).length;
+      toast.error(state.message, {
+        description: n
+          ? `${n} ${n === 1 ? "campo requiere" : "campos requieren"} tu atención.`
+          : undefined,
+      });
+      // Lleva al postulante al primer campo con error.
+      requestAnimationFrame(() => {
+        const bad = formRef.current?.querySelector<HTMLElement>(".is-invalid");
+        if (!bad) return;
+        bad.scrollIntoView({ behavior: "smooth", block: "center" });
+        const input = bad.matches("input, select, textarea")
+          ? bad
+          : bad.querySelector<HTMLElement>("input, select, textarea");
+        input?.focus({ preventScroll: true });
+      });
+    } else if (state.status === "success") {
+      toast.success("¡Postulación registrada!", {
+        description: `Tu código de seguimiento es ${state.code}.`,
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   }, [state]);
 
   const fe = state.status === "error" ? state.fieldErrors ?? {} : {};
   const err = (name: string) =>
-    fe[name] ? <span className="ps-err">{fe[name]}</span> : null;
+    fe[name] ? (
+      <span className="ps-err" role="alert">
+        {fe[name]}
+      </span>
+    ) : null;
   const cls = (name: string) => `ps-input${fe[name] ? " is-invalid" : ""}`;
+  const inv = (name: string) => (fe[name] ? true : undefined);
+
+  const toaster = (
+    <Toaster
+      theme={theme}
+      position="top-center"
+      richColors
+      closeButton
+      toastOptions={{ style: { fontFamily: "inherit" } }}
+    />
+  );
 
   if (state.status === "success") {
     return (
-      <div className="ps-done">
-        <span className="ps-done__icon">
-          <Icon name="check" size={34} />
-        </span>
-        <h2>¡Postulación registrada!</h2>
-        <p>
-          Recibimos tu postulación al <b>Diplomado en {diplomaTitle}</b>. Guarda
-          tu código de seguimiento:
-        </p>
-        <div className="ps-code">{state.code}</div>
-        <p className="ps-done__note">
-          Nuestro equipo de la Escuela de Posgrado revisará tus documentos y se
-          comunicará contigo al correo registrado. Si necesitas asistencia,
-          menciona tu código de seguimiento.
-        </p>
-        <div className="ps-done__actions">
-          <Link href={`/diplomado/${slug}`} className="ps-btn ps-btn--primary">
-            Volver al diplomado
-          </Link>
-          <Link href="/" className="ps-btn ps-btn--ghost">
-            Ir al inicio
-          </Link>
+      <>
+        {toaster}
+        <div className="ps-done">
+          <span className="ps-done__icon">
+            <Icon name="check" size={34} />
+          </span>
+          <h2>¡Postulación registrada!</h2>
+          <p>
+            Recibimos tu postulación al <b>Diplomado en {diplomaTitle}</b>.
+            Guarda tu código de seguimiento:
+          </p>
+          <div className="ps-code">{state.code}</div>
+          <p className="ps-done__note">
+            Nuestro equipo de la Escuela de Posgrado revisará tus documentos y
+            se comunicará contigo al correo registrado. Si necesitas asistencia,
+            menciona tu código de seguimiento.
+          </p>
+          <div className="ps-done__actions">
+            <Link href={`/diplomado/${slug}`} className="ps-btn ps-btn--primary">
+              Volver al diplomado
+            </Link>
+            <Link href="/" className="ps-btn ps-btn--ghost">
+              Ir al inicio
+            </Link>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
     <>
-    <form action={formAction} className="ps-form" noValidate>
+    {toaster}
+    <form
+      ref={formRef}
+      action={formAction}
+      onSubmit={handleSubmit}
+      className="ps-form"
+      noValidate
+    >
       <input type="hidden" name="slug" value={slug} />
 
       {state.status === "error" && !state.modal && (
@@ -152,7 +239,9 @@ export function PostularForm({
 
       {/* ── Datos personales ── */}
       <fieldset className="ps-sect">
-        <legend>1. Datos personales</legend>
+        <legend>
+          <span className="ps-sect__num">1</span>Datos personales
+        </legend>
         <div className="ps-grid">
           <label className="ps-field">
             <span className="ps-label">Tipo de documento *</span>
@@ -161,6 +250,7 @@ export function PostularForm({
               value={docType}
               onChange={(e) => setDocType(e.target.value)}
               className={cls("docType")}
+              aria-invalid={inv("docType")}
             >
               {DOC_TYPES.map((d) => (
                 <option key={d.value} value={d.value}>
@@ -188,6 +278,7 @@ export function PostularForm({
                 inputMode={docType === "DNI" ? "numeric" : "text"}
                 autoComplete="off"
                 className={cls("docNumber")}
+                aria-invalid={inv("docNumber")}
                 placeholder="Ej. 71234567"
               />
               {docType === "DNI" && (
@@ -219,6 +310,7 @@ export function PostularForm({
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               className={cls("firstName")}
+              aria-invalid={inv("firstName")}
               autoComplete="given-name"
             />
             {err("firstName")}
@@ -230,6 +322,7 @@ export function PostularForm({
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               className={cls("lastName")}
+              aria-invalid={inv("lastName")}
               autoComplete="family-name"
             />
             {err("lastName")}
@@ -265,7 +358,9 @@ export function PostularForm({
 
       {/* ── Contacto ── */}
       <fieldset className="ps-sect">
-        <legend>2. Contacto</legend>
+        <legend>
+          <span className="ps-sect__num">2</span>Contacto
+        </legend>
         <div className="ps-grid">
           <label className="ps-field">
             <span className="ps-label">Correo electrónico *</span>
@@ -273,6 +368,7 @@ export function PostularForm({
               type="email"
               name="email"
               className={cls("email")}
+              aria-invalid={inv("email")}
               autoComplete="email"
               placeholder="nombre@correo.com"
             />
@@ -283,7 +379,9 @@ export function PostularForm({
             <input
               name="phone"
               className={cls("phone")}
+              aria-invalid={inv("phone")}
               autoComplete="tel"
+              inputMode="tel"
               placeholder="Ej. 987654321"
             />
             {err("phone")}
@@ -315,11 +413,18 @@ export function PostularForm({
 
       {/* ── Formación y experiencia ── */}
       <fieldset className="ps-sect">
-        <legend>3. Formación y experiencia</legend>
+        <legend>
+          <span className="ps-sect__num">3</span>Formación y experiencia
+        </legend>
         <div className="ps-grid">
           <label className="ps-field">
             <span className="ps-label">Grado académico *</span>
-            <select name="academicDegree" defaultValue="" className={cls("academicDegree")}>
+            <select
+              name="academicDegree"
+              defaultValue=""
+              className={cls("academicDegree")}
+              aria-invalid={inv("academicDegree")}
+            >
               <option value="">Selecciona…</option>
               {ACADEMIC_DEGREES.map((g) => (
                 <option key={g} value={g}>
@@ -350,7 +455,9 @@ export function PostularForm({
 
       {/* ── Preferencias ── */}
       <fieldset className="ps-sect">
-        <legend>4. Preferencias</legend>
+        <legend>
+          <span className="ps-sect__num">4</span>Preferencias
+        </legend>
         <div className="ps-grid">
           <label className="ps-field">
             <span className="ps-label">Modalidad de preferencia</span>
@@ -374,7 +481,9 @@ export function PostularForm({
 
       {/* ── Documentos ── */}
       <fieldset className="ps-sect">
-        <legend>5. Documentos</legend>
+        <legend>
+          <span className="ps-sect__num">5</span>Documentos
+        </legend>
         <p className="ps-hint">
           Formatos permitidos: PDF, JPG, PNG o WEBP · máximo {fmtBytes(MAX_FILE_BYTES)}{" "}
           por archivo.
@@ -405,7 +514,8 @@ export function PostularForm({
 
       <div className="ps-submit">
         <button type="submit" className="ps-btn ps-btn--primary ps-btn--lg" disabled={pending}>
-          {pending ? "Enviando…" : "Enviar postulación"}
+          {pending && <span className="ps-spinner" aria-hidden />}
+          {pending ? "Enviando postulación…" : "Enviar postulación"}
           {!pending && <Icon name="chevron-right" size={18} />}
         </button>
         <p className="ps-required-note">* Campos obligatorios</p>
@@ -628,7 +738,9 @@ function FileField({
   const shown = localErr ?? error;
 
   return (
-    <div className={`ps-doc${shown ? " is-invalid" : ""}`}>
+    <div
+      className={`ps-doc${shown ? " is-invalid" : ""}${info ? " is-filled" : ""}`}
+    >
       <div className="ps-doc__head">
         <span className="ps-doc__label">{label}</span>
         {info && (
@@ -652,10 +764,20 @@ function FileField({
               setLocalErr(null);
               return;
             }
-            if (f.size > MAX_FILE_BYTES) {
-              setLocalErr(`El archivo supera el máximo de ${fmtBytes(MAX_FILE_BYTES)}.`);
+            if (!ACCEPTED_MIME.includes(f.type as (typeof ACCEPTED_MIME)[number])) {
+              const msg = "Formato no permitido (usa PDF, JPG, PNG o WEBP).";
+              setLocalErr(msg);
               setInfo(null);
               e.target.value = "";
+              toast.error(label.replace(" *", ""), { description: msg });
+              return;
+            }
+            if (f.size > MAX_FILE_BYTES) {
+              const msg = `El archivo supera el máximo de ${fmtBytes(MAX_FILE_BYTES)}.`;
+              setLocalErr(msg);
+              setInfo(null);
+              e.target.value = "";
+              toast.error(label.replace(" *", ""), { description: msg });
               return;
             }
             setLocalErr(null);
@@ -663,7 +785,11 @@ function FileField({
           }}
         />
       </label>
-      {shown && <span className="ps-err">{shown}</span>}
+      {shown && (
+        <span className="ps-err" role="alert">
+          {shown}
+        </span>
+      )}
     </div>
   );
 }
