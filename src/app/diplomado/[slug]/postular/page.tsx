@@ -74,7 +74,14 @@ export default async function PostularPage({ params }: Params) {
       </div>
 
       <main className="ps-main">
-        <PostularForm slug={slug} diplomaTitle={d.title} modality={d.modality} />
+        <PostularForm
+          slug={slug}
+          diplomaTitle={d.title}
+          modality={d.modality}
+          totalHours={d.totalHours}
+          credits={d.credits}
+          modulesCount={d.modules.length}
+        />
       </main>
 
       {/* Personaje 3D flotante — esquina inferior izquierda */}

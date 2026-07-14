@@ -556,6 +556,36 @@ html {
   gap: 8px;
 }
 
+/* ─────────── Fila de encabezado con figura (patrón reutilizable) ───────────
+   Texto a un lado, recorte fotográfico al otro, aprovechando el espacio
+   libre del encabezado. `--flip` pone la figura a la izquierda. */
+.lp-headrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 40px;
+  align-items: center;
+  margin-bottom: 40px;
+}
+.lp-headrow--flip {
+  grid-template-columns: 380px minmax(0, 1fr);
+}
+.lp-headrow .lp-section__head {
+  text-align: left;
+  margin: 0;
+  max-width: 640px;
+}
+.lp-secfig {
+  margin: 0;
+  align-self: center;
+}
+.lp-secfig img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* sombra que sigue la silueta del recorte (no una caja) */
+  filter: drop-shadow(0 14px 24px rgba(32, 33, 36, 0.16));
+}
+
 /* ─────────── Diplomados ─────────── */
 .lp-dips {
   display: grid;
@@ -905,6 +935,14 @@ html {
   }
   .lp-footer__brand {
     grid-column: 1 / -1;
+  }
+  /* Las figuras decorativas ceden su columna al contenido */
+  .lp-headrow,
+  .lp-headrow--flip {
+    grid-template-columns: 1fr;
+  }
+  .lp-secfig {
+    display: none;
   }
   .lp-steps {
     grid-template-columns: repeat(2, 1fr);

@@ -24,6 +24,32 @@ import {
 import { submitApplication } from "./actions";
 import "./postular.css";
 
+/* ── Secciones del formulario, usadas por el rail de progreso ──
+   `required` son los name= de los campos obligatorios de la sección;
+   las secciones sin obligatorios se marcan como opcionales. */
+const SECTIONS = [
+  {
+    id: "personales",
+    title: "Datos personales",
+    required: ["docType", "docNumber", "firstName", "lastName"],
+  },
+  { id: "contacto", title: "Contacto", required: ["email", "phone"] },
+  {
+    id: "formacion",
+    title: "Formación y experiencia",
+    required: ["academicDegree"],
+  },
+  { id: "preferencias", title: "Preferencias", required: [], optional: true },
+  {
+    id: "documentos",
+    title: "Documentos",
+    required: [],
+    files: DOCUMENT_SLOTS.filter((s) => s.required).map((s) => s.kind),
+  },
+] as const;
+
+const REQUIRED_SECTIONS = SECTIONS.filter((s) => !("optional" in s && s.optional));
+
 /** Sigue el tema claro/oscuro del sitio (html[data-theme]) para el Toaster. */
 function useSiteTheme(): "light" | "dark" {
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -43,10 +69,16 @@ export function PostularForm({
   slug,
   diplomaTitle,
   modality,
+  totalHours,
+  credits,
+  modulesCount,
 }: {
   slug: string;
   diplomaTitle: string;
   modality: string;
+  totalHours: number;
+  credits: number;
+  modulesCount: number;
 }) {
   const [state, formAction, pending] = useActionState(
     submitApplication,
@@ -77,6 +109,46 @@ export function PostularForm({
   const lastDni = useRef("");
   const [showErrorModal, setShowErrorModal] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+
+  // ── Progreso por sección para el rail lateral ──
+  // Se recalcula leyendo el FormData real, así cubre también los campos
+  // no controlados (correo, teléfono, archivos…).
+  const [sectionDone, setSectionDone] = useState<boolean[]>(() =>
+    SECTIONS.map(() => false),
+  );
+
+  function recomputeProgress() {
+    const form = formRef.current;
+    if (!form) return;
+    const fd = new FormData(form);
+    const filled = (n: string) => String(fd.get(n) ?? "").trim() !== "";
+    const next = SECTIONS.map((s) => {
+      if ("files" in s && s.files) {
+        return s.files.every((n) => {
+          const f = fd.get(n);
+          return f instanceof File && f.size > 0;
+        });
+      }
+      if ("optional" in s && s.optional) return filled("motivation");
+      return s.required.every(filled);
+    });
+    // Evita re-renderizar en cada tecla si ninguna sección cambió de estado.
+    setSectionDone((prev) =>
+      next.every((v, i) => v === prev[i]) ? prev : next,
+    );
+  }
+
+  // Cubre el autocompletado por DNI (campos controlados que cambian por
+  // setState, sin disparar eventos de input en el DOM) y el estado inicial.
+  useEffect(recomputeProgress, [
+    docType,
+    docNumber,
+    firstName,
+    lastName,
+    birthDate,
+    gender,
+    address,
+  ]);
 
   async function lookupDni(value: string) {
     if (docType !== "DNI" || !/^\d{8}$/.test(value)) return;
@@ -218,13 +290,36 @@ export function PostularForm({
     );
   }
 
+  const doneCount = REQUIRED_SECTIONS.filter(
+    (s) => sectionDone[SECTIONS.findIndex((x) => x.id === s.id)],
+  ).length;
+
+  function jumpTo(id: string) {
+    document
+      .getElementById(`ps-sect-${id}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
     <>
     {toaster}
+    <div className="ps-layout">
+    <div className="ps-mini">
+      <div className="ps-mini__bar">
+        <span
+          style={{ width: `${(doneCount / REQUIRED_SECTIONS.length) * 100}%` }}
+        />
+      </div>
+      <span className="ps-mini__label">
+        {doneCount} de {REQUIRED_SECTIONS.length} secciones completas
+      </span>
+    </div>
     <form
       ref={formRef}
       action={formAction}
       onSubmit={handleSubmit}
+      onInput={recomputeProgress}
+      onChange={recomputeProgress}
       className="ps-form"
       noValidate
     >
@@ -238,10 +333,14 @@ export function PostularForm({
       )}
 
       {/* ── Datos personales ── */}
-      <fieldset className="ps-sect">
+      <fieldset className="ps-sect" id="ps-sect-personales">
         <legend>
           <span className="ps-sect__num">1</span>Datos personales
         </legend>
+        <p className="ps-sect__desc">
+          Tus datos tal como figuran en tu documento de identidad. Si tienes
+          DNI, podemos autocompletarlos por ti.
+        </p>
         <div className="ps-grid">
           <label className="ps-field">
             <span className="ps-label">Tipo de documento *</span>
@@ -357,10 +456,14 @@ export function PostularForm({
       </fieldset>
 
       {/* ── Contacto ── */}
-      <fieldset className="ps-sect">
+      <fieldset className="ps-sect" id="ps-sect-contacto">
         <legend>
           <span className="ps-sect__num">2</span>Contacto
         </legend>
+        <p className="ps-sect__desc">
+          Usaremos estos datos para comunicarnos contigo durante el proceso de
+          admisión.
+        </p>
         <div className="ps-grid">
           <label className="ps-field">
             <span className="ps-label">Correo electrónico *</span>
@@ -412,10 +515,13 @@ export function PostularForm({
       </fieldset>
 
       {/* ── Formación y experiencia ── */}
-      <fieldset className="ps-sect">
+      <fieldset className="ps-sect" id="ps-sect-formacion">
         <legend>
           <span className="ps-sect__num">3</span>Formación y experiencia
         </legend>
+        <p className="ps-sect__desc">
+          Tu perfil académico y laboral nos ayuda a conocerte mejor.
+        </p>
         <div className="ps-grid">
           <label className="ps-field">
             <span className="ps-label">Grado académico *</span>
@@ -454,10 +560,14 @@ export function PostularForm({
       </fieldset>
 
       {/* ── Preferencias ── */}
-      <fieldset className="ps-sect">
+      <fieldset className="ps-sect" id="ps-sect-preferencias">
         <legend>
           <span className="ps-sect__num">4</span>Preferencias
+          <span className="ps-sect__tag">Opcional</span>
         </legend>
+        <p className="ps-sect__desc">
+          Cuéntanos cómo prefieres llevar el diplomado y qué te motiva.
+        </p>
         <div className="ps-grid">
           <label className="ps-field">
             <span className="ps-label">Modalidad de preferencia</span>
@@ -480,13 +590,13 @@ export function PostularForm({
       </fieldset>
 
       {/* ── Documentos ── */}
-      <fieldset className="ps-sect">
+      <fieldset className="ps-sect" id="ps-sect-documentos">
         <legend>
           <span className="ps-sect__num">5</span>Documentos
         </legend>
-        <p className="ps-hint">
-          Formatos permitidos: PDF, JPG, PNG o WEBP · máximo {fmtBytes(MAX_FILE_BYTES)}{" "}
-          por archivo.
+        <p className="ps-sect__desc">
+          Adjunta los archivos que sustentan tu postulación. Formatos: PDF,
+          JPG, PNG o WEBP · máximo {fmtBytes(MAX_FILE_BYTES)} por archivo.
         </p>
         <div className="ps-docs">
           {DOCUMENT_SLOTS.map((slot) => (
@@ -521,6 +631,74 @@ export function PostularForm({
         <p className="ps-required-note">* Campos obligatorios</p>
       </div>
     </form>
+
+    {/* ── Rail lateral: resumen del diplomado + progreso en vivo ── */}
+    <aside className="ps-aside" aria-label="Resumen de tu postulación">
+      <div className="ps-aside__card">
+        <span className="ps-aside__eyebrow">Tu postulación</span>
+        <h2 className="ps-aside__title">Diplomado en {diplomaTitle}</h2>
+        <ul className="ps-aside__meta">
+          <li>
+            <Icon name="device" size={15} /> {modality}
+          </li>
+          <li>
+            <Icon name="clock" size={15} /> {totalHours} horas · {credits}{" "}
+            créditos
+          </li>
+          <li>
+            <Icon name="folder" size={15} /> {modulesCount} módulos
+          </li>
+        </ul>
+
+        <div className="ps-aside__progress">
+          <div
+            className="ps-aside__bar"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={REQUIRED_SECTIONS.length}
+            aria-valuenow={doneCount}
+            aria-label="Secciones obligatorias completas"
+          >
+            <span
+              style={{
+                width: `${(doneCount / REQUIRED_SECTIONS.length) * 100}%`,
+              }}
+            />
+          </div>
+          <span className="ps-aside__count">
+            {doneCount} de {REQUIRED_SECTIONS.length} secciones completas
+          </span>
+        </div>
+
+        <ol className="ps-steps">
+          {SECTIONS.map((s, i) => {
+            const done = sectionDone[i];
+            const optional = "optional" in s && s.optional;
+            return (
+              <li
+                key={s.id}
+                className={`ps-step${done ? " is-done" : ""}`}
+              >
+                <button type="button" onClick={() => jumpTo(s.id)}>
+                  <span className="ps-step__dot" aria-hidden>
+                    {done ? <Icon name="check" size={12} /> : i + 1}
+                  </span>
+                  <span className="ps-step__label">{s.title}</span>
+                  {optional && !done && (
+                    <span className="ps-step__tag">Opcional</span>
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+      <p className="ps-aside__help">
+        Al enviar tu postulación recibirás un <b>código de seguimiento</b>.
+        Guárdalo: te servirá para consultar el estado de tu expediente.
+      </p>
+    </aside>
+    </div>
     {pendingDni && <DniModal data={pendingDni} onClose={dismissDni} />}
     {showErrorModal && state.status === "error" && (
       <ErrorModal

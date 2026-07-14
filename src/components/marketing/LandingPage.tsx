@@ -413,17 +413,33 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
       {/* ─────────── Diplomados (datos reales de la BD) ─────────── */}
       {diplomas.length > 0 && (
         <section className="lp-section" id="diplomados">
-          <div className="lp-section__head" data-reveal>
+          {/* Encabezado en fila: texto a la izquierda, figura a la derecha */}
+          <div className="lp-headrow">
+            <div className="lp-section__head" data-reveal>
             <span className="lp-kicker">Formación continua</span>
             <h2>Diplomados de posgrado</h2>
             <p>
               Programas modulares de especialización, con certificación por
               módulo y modalidad flexible para profesionales que trabajan.
             </p>
+            </div>
+
+            {/* Figura decorativa: ingeniera UNAMAD (mira hacia el título).
+                Oculta en pantallas angostas. */}
+            <figure className="lp-secfig" data-reveal aria-hidden="true">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/sectiones/ingeniera.webp"
+                alt=""
+                width={840}
+                height={840}
+                loading="lazy"
+              />
+            </figure>
           </div>
 
           <div className="lp-dips" data-reveal-group>
-            {diplomas.map((d) => (
+              {diplomas.map((d) => (
               <article key={d.slug} className="lp-dip" data-reveal>
                 <div className="lp-dip__top">
                   <span className="lp-dip__tag">{d.subtitle ?? "Diplomado"}</span>
@@ -459,20 +475,33 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
                   <Icon name="chevron-right" size={16} />
                 </Link>
               </article>
-            ))}
+              ))}
           </div>
         </section>
       )}
 
       {/* ─────────── Programas ─────────── */}
       <section className="lp-section" id="programas">
-        <div className="lp-section__head" data-reveal>
-          <span className="lp-kicker">Oferta académica</span>
-          <h2>Programas de posgrado</h2>
-          <p>
-            Maestrías, doctorado y diplomados diseñados junto al sector
-            productivo y la comunidad científica de la región.
-          </p>
+        {/* Encabezado en fila espejada: figura a la izquierda, texto a la derecha */}
+        <div className="lp-headrow lp-headrow--flip">
+          <figure className="lp-secfig" data-reveal aria-hidden="true">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/sectiones/laptop_pro.webp"
+              alt=""
+              width={1100}
+              height={733}
+              loading="lazy"
+            />
+          </figure>
+          <div className="lp-section__head" data-reveal>
+            <span className="lp-kicker">Oferta académica</span>
+            <h2>Programas de posgrado</h2>
+            <p>
+              Maestrías, doctorado y diplomados diseñados junto al sector
+              productivo y la comunidad científica de la región.
+            </p>
+          </div>
         </div>
 
         <div className="lp-programs" data-reveal-group>
