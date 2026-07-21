@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { lookupUbigeo } from "@/lib/ubigeo";
 
 // Proxy de la consulta por DNI a la API institucional de la UNAMAD.
 // Se hace del lado del servidor para evitar CORS y normalizar la respuesta
@@ -13,6 +14,8 @@ type UpstreamDni = {
   FECHA_NAC?: string;
   DIRECCION?: string;
   SEXO?: string;
+  UBIGEO_NAC?: string; // ubigeo de nacimiento (código de 6 dígitos, confiable)
+  UBIGEO_DIR?: string; // ubigeo de domicilio (a veces truncado); respaldo
 };
 
 export async function GET(
@@ -60,7 +63,23 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ firstName, lastName, birthDate, gender, address });
+    // Ubigeo: se prioriza UBIGEO_NAC (código de 6 dígitos) y se recurre a
+    // UBIGEO_DIR como respaldo. Se traduce a nombres con el catálogo RENIEC.
+    const ubi = lookupUbigeo(d.UBIGEO_NAC) ?? lookupUbigeo(d.UBIGEO_DIR);
+    const region = ubi?.region ?? "";
+    const province = ubi?.province ?? "";
+    const district = ubi?.district ?? "";
+
+    return NextResponse.json({
+      firstName,
+      lastName,
+      birthDate,
+      gender,
+      address,
+      region,
+      province,
+      district,
+    });
   } catch {
     return NextResponse.json(
       { error: "El servicio de consulta no está disponible por ahora." },

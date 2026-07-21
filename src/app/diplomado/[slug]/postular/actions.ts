@@ -5,7 +5,6 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { saveUploadedFile } from "@/lib/applications-storage";
 import {
-  ACADEMIC_DEGREES,
   ACCEPTED_MIME,
   DOC_TYPES,
   DOCUMENT_SLOTS,
@@ -18,7 +17,6 @@ import {
 } from "@/lib/applications";
 
 const DOC_TYPE_VALUES = DOC_TYPES.map((d) => d.value) as string[];
-const DEGREE_VALUES = ACADEMIC_DEGREES as readonly string[];
 
 /** Genera un código único POST-AAAA-NNNNN, reintentando ante colisión. */
 async function createWithUniqueCode(
@@ -95,11 +93,6 @@ export async function submitApplication(
   const phone = s("phone");
   if (!phone) fieldErrors.phone = "Ingresa un teléfono o celular.";
 
-  // ── Académico ──
-  const academicDegree = s("academicDegree");
-  if (!DEGREE_VALUES.includes(academicDegree))
-    fieldErrors.academicDegree = "Selecciona tu grado académico.";
-
   // ── Consentimiento ──
   if (!formData.get("consent"))
     fieldErrors.consent =
@@ -110,11 +103,7 @@ export async function submitApplication(
   for (const slot of DOCUMENT_SLOTS) {
     const f = formData.get(slot.kind);
     const file = f instanceof File && f.size > 0 ? f : null;
-    if (!file) {
-      if (slot.required)
-        fieldErrors[slot.kind] = `Adjunta: ${slot.label}.`;
-      continue;
-    }
+    if (!file) continue; // documentos opcionales por ahora (se regulará más adelante)
     if (!ACCEPTED_MIME.includes(file.type as (typeof ACCEPTED_MIME)[number])) {
       fieldErrors[slot.kind] = "Formato no permitido (usa PDF, JPG, PNG o WEBP).";
       continue;
@@ -168,7 +157,7 @@ export async function submitApplication(
       region: opt("region"),
       province: opt("province"),
       district: opt("district"),
-      academicDegree,
+      academicDegree: opt("academicDegree"),
       profession: opt("profession"),
       university: opt("university"),
       employer: opt("employer"),

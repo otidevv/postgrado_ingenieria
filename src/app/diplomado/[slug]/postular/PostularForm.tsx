@@ -11,15 +11,9 @@ import Link from "next/link";
 import { Toaster, toast } from "sonner";
 import { Icon } from "@/components/admin/Icon";
 import {
-  ACADEMIC_DEGREES,
-  ACCEPT_ATTR,
-  ACCEPTED_MIME,
   DOC_TYPES,
-  DOCUMENT_SLOTS,
   GENDERS,
   INITIAL_SUBMIT_STATE,
-  MAX_FILE_BYTES,
-  fmtBytes,
 } from "@/lib/applications";
 import { submitApplication } from "./actions";
 import "./postular.css";
@@ -34,21 +28,9 @@ const SECTIONS = [
     required: ["docType", "docNumber", "firstName", "lastName"],
   },
   { id: "contacto", title: "Contacto", required: ["email", "phone"] },
-  {
-    id: "formacion",
-    title: "Formación y experiencia",
-    required: ["academicDegree"],
-  },
-  { id: "preferencias", title: "Preferencias", required: [], optional: true },
-  {
-    id: "documentos",
-    title: "Documentos",
-    required: [],
-    files: DOCUMENT_SLOTS.filter((s) => s.required).map((s) => s.kind),
-  },
 ] as const;
 
-const REQUIRED_SECTIONS = SECTIONS.filter((s) => !("optional" in s && s.optional));
+const REQUIRED_SECTIONS = SECTIONS;
 
 /** Sigue el tema claro/oscuro del sitio (html[data-theme]) para el Toaster. */
 function useSiteTheme(): "light" | "dark" {
@@ -94,6 +76,9 @@ export function PostularForm({
   const [birthDate, setBirthDate] = useState("");
   const [gender, setGender] = useState("");
   const [address, setAddress] = useState("");
+  const [region, setRegion] = useState("");
+  const [province, setProvince] = useState("");
+  const [district, setDistrict] = useState("");
   const [dniLookup, setDniLookup] = useState<{
     status: "idle" | "loading" | "ok" | "error";
     message?: string;
@@ -105,6 +90,9 @@ export function PostularForm({
     birthDate: string;
     gender: string;
     address: string;
+    region: string;
+    province: string;
+    district: string;
   } | null>(null);
   const lastDni = useRef("");
   const [showErrorModal, setShowErrorModal] = useState(false);
@@ -122,16 +110,7 @@ export function PostularForm({
     if (!form) return;
     const fd = new FormData(form);
     const filled = (n: string) => String(fd.get(n) ?? "").trim() !== "";
-    const next = SECTIONS.map((s) => {
-      if ("files" in s && s.files) {
-        return s.files.every((n) => {
-          const f = fd.get(n);
-          return f instanceof File && f.size > 0;
-        });
-      }
-      if ("optional" in s && s.optional) return filled("motivation");
-      return s.required.every(filled);
-    });
+    const next = SECTIONS.map((s) => s.required.every(filled));
     // Evita re-renderizar en cada tecla si ninguna sección cambió de estado.
     setSectionDone((prev) =>
       next.every((v, i) => v === prev[i]) ? prev : next,
@@ -170,6 +149,9 @@ export function PostularForm({
       if (data.birthDate) setBirthDate(data.birthDate);
       if (data.gender) setGender(data.gender);
       if (data.address) setAddress(data.address);
+      if (data.region) setRegion(data.region);
+      if (data.province) setProvince(data.province);
+      if (data.district) setDistrict(data.district);
       setPendingDni({
         dni: value,
         firstName: data.firstName ?? "",
@@ -177,6 +159,9 @@ export function PostularForm({
         birthDate: data.birthDate ?? "",
         gender: data.gender ?? "",
         address: data.address ?? "",
+        region: data.region ?? "",
+        province: data.province ?? "",
+        district: data.district ?? "",
       });
       setDniLookup({ status: "idle" });
     } catch {
@@ -501,113 +486,34 @@ export function PostularForm({
           </label>
           <label className="ps-field">
             <span className="ps-label">Región</span>
-            <input name="region" className={cls("region")} placeholder="Madre de Dios" />
+            <input
+              name="region"
+              value={region}
+              onChange={(e) => setRegion(e.target.value)}
+              className={cls("region")}
+              placeholder="Madre de Dios"
+            />
           </label>
           <label className="ps-field">
             <span className="ps-label">Provincia</span>
-            <input name="province" className={cls("province")} placeholder="Tambopata" />
+            <input
+              name="province"
+              value={province}
+              onChange={(e) => setProvince(e.target.value)}
+              className={cls("province")}
+              placeholder="Tambopata"
+            />
           </label>
           <label className="ps-field">
             <span className="ps-label">Distrito</span>
-            <input name="district" className={cls("district")} placeholder="Puerto Maldonado" />
-          </label>
-        </div>
-      </fieldset>
-
-      {/* ── Formación y experiencia ── */}
-      <fieldset className="ps-sect" id="ps-sect-formacion">
-        <legend>
-          <span className="ps-sect__num">3</span>Formación y experiencia
-        </legend>
-        <p className="ps-sect__desc">
-          Tu perfil académico y laboral nos ayuda a conocerte mejor.
-        </p>
-        <div className="ps-grid">
-          <label className="ps-field">
-            <span className="ps-label">Grado académico *</span>
-            <select
-              name="academicDegree"
-              defaultValue=""
-              className={cls("academicDegree")}
-              aria-invalid={inv("academicDegree")}
-            >
-              <option value="">Selecciona…</option>
-              {ACADEMIC_DEGREES.map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-            </select>
-            {err("academicDegree")}
-          </label>
-          <label className="ps-field">
-            <span className="ps-label">Profesión / especialidad</span>
-            <input name="profession" className={cls("profession")} />
-          </label>
-          <label className="ps-field ps-field--wide">
-            <span className="ps-label">Universidad o institución de procedencia</span>
-            <input name="university" className={cls("university")} />
-          </label>
-          <label className="ps-field">
-            <span className="ps-label">Centro laboral</span>
-            <input name="employer" className={cls("employer")} />
-          </label>
-          <label className="ps-field">
-            <span className="ps-label">Cargo</span>
-            <input name="position" className={cls("position")} />
-          </label>
-        </div>
-      </fieldset>
-
-      {/* ── Preferencias ── */}
-      <fieldset className="ps-sect" id="ps-sect-preferencias">
-        <legend>
-          <span className="ps-sect__num">4</span>Preferencias
-          <span className="ps-sect__tag">Opcional</span>
-        </legend>
-        <p className="ps-sect__desc">
-          Cuéntanos cómo prefieres llevar el diplomado y qué te motiva.
-        </p>
-        <div className="ps-grid">
-          <label className="ps-field">
-            <span className="ps-label">Modalidad de preferencia</span>
             <input
-              name="modality"
-              className={cls("modality")}
-              defaultValue={modality}
+              name="district"
+              value={district}
+              onChange={(e) => setDistrict(e.target.value)}
+              className={cls("district")}
+              placeholder="Puerto Maldonado"
             />
           </label>
-          <label className="ps-field ps-field--full">
-            <span className="ps-label">Carta de intención / motivación</span>
-            <textarea
-              name="motivation"
-              rows={4}
-              className={cls("motivation")}
-              placeholder="Cuéntanos brevemente por qué deseas llevar este diplomado."
-            />
-          </label>
-        </div>
-      </fieldset>
-
-      {/* ── Documentos ── */}
-      <fieldset className="ps-sect" id="ps-sect-documentos">
-        <legend>
-          <span className="ps-sect__num">5</span>Documentos
-        </legend>
-        <p className="ps-sect__desc">
-          Adjunta los archivos que sustentan tu postulación. Formatos: PDF,
-          JPG, PNG o WEBP · máximo {fmtBytes(MAX_FILE_BYTES)} por archivo.
-        </p>
-        <div className="ps-docs">
-          {DOCUMENT_SLOTS.map((slot) => (
-            <FileField
-              key={slot.kind}
-              name={slot.kind}
-              label={slot.label + (slot.required ? " *" : "")}
-              hint={slot.hint}
-              error={fe[slot.kind]}
-            />
-          ))}
         </div>
       </fieldset>
 
@@ -722,6 +628,9 @@ function DniModal({
     birthDate: string;
     gender: string;
     address: string;
+    region: string;
+    province: string;
+    district: string;
   };
   onClose: () => void;
 }) {
@@ -755,6 +664,9 @@ function DniModal({
     },
     { label: "Sexo", value: genderLabel },
     { label: "Dirección", value: data.address },
+    { label: "Región", value: data.region },
+    { label: "Provincia", value: data.province },
+    { label: "Distrito", value: data.district },
   ];
 
   return (
@@ -894,80 +806,6 @@ function ErrorModal({
           </button>
         </div>
       </div>
-    </div>
-  );
-}
-
-/** Campo de archivo con vista del nombre/tamaño seleccionado y validación en vivo. */
-function FileField({
-  name,
-  label,
-  hint,
-  error,
-}: {
-  name: string;
-  label: string;
-  hint: string;
-  error?: string;
-}) {
-  const [info, setInfo] = useState<{ name: string; size: number } | null>(null);
-  const [localErr, setLocalErr] = useState<string | null>(null);
-
-  const shown = localErr ?? error;
-
-  return (
-    <div
-      className={`ps-doc${shown ? " is-invalid" : ""}${info ? " is-filled" : ""}`}
-    >
-      <div className="ps-doc__head">
-        <span className="ps-doc__label">{label}</span>
-        {info && (
-          <span className="ps-doc__file">
-            <Icon name="check" size={14} /> {info.name} · {fmtBytes(info.size)}
-          </span>
-        )}
-      </div>
-      <p className="ps-doc__hint">{hint}</p>
-      <label className="ps-doc__drop">
-        <Icon name="download" size={18} />
-        <span>{info ? "Cambiar archivo" : "Seleccionar archivo"}</span>
-        <input
-          type="file"
-          name={name}
-          accept={ACCEPT_ATTR}
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (!f) {
-              setInfo(null);
-              setLocalErr(null);
-              return;
-            }
-            if (!ACCEPTED_MIME.includes(f.type as (typeof ACCEPTED_MIME)[number])) {
-              const msg = "Formato no permitido (usa PDF, JPG, PNG o WEBP).";
-              setLocalErr(msg);
-              setInfo(null);
-              e.target.value = "";
-              toast.error(label.replace(" *", ""), { description: msg });
-              return;
-            }
-            if (f.size > MAX_FILE_BYTES) {
-              const msg = `El archivo supera el máximo de ${fmtBytes(MAX_FILE_BYTES)}.`;
-              setLocalErr(msg);
-              setInfo(null);
-              e.target.value = "";
-              toast.error(label.replace(" *", ""), { description: msg });
-              return;
-            }
-            setLocalErr(null);
-            setInfo({ name: f.name, size: f.size });
-          }}
-        />
-      </label>
-      {shown && (
-        <span className="ps-err" role="alert">
-          {shown}
-        </span>
-      )}
     </div>
   );
 }
