@@ -19,13 +19,11 @@ export async function proxy(request: NextRequest) {
   const session = await verifySession(token);
 
   if (isPublic) {
-    // If logged in and visiting /login, send them home.
-    if (pathname === "/login" && session) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/inicio";
-      url.search = "";
-      return NextResponse.redirect(url);
-    }
+    // Nota: el redirect "ya logueado en /login → home" lo hace la propia
+    // página de login contra la BD (getCurrentUser). Hacerlo aquí con la
+    // cookie firmada provocaba un bucle infinito cuando la cookie era
+    // válida pero la sesión ya no existía en la BD (usuario eliminado o
+    // sesiones revocadas).
     return NextResponse.next();
   }
 
