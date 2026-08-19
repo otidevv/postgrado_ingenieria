@@ -252,6 +252,8 @@ model Submission {
   enrollmentId String
   fileName     String?  // nombre original mostrado
   storedPath   String?  // relativo a storage/entregas/
+  mimeType     String?
+  sizeBytes    Int?
   linkUrl      String?  // alternativa: entrega por enlace
   comment      String?
   submittedAt  DateTime @default(now())
@@ -260,6 +262,7 @@ model Submission {
   enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
 
   @@unique([assessmentId, enrollmentId])
+  @@index([enrollmentId])
 }
 
 // ─────────────────────────── Incident reporting ───────────────────────────
