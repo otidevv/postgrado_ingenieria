@@ -1,0 +1,75 @@
+/* Espacio de trabajo del módulo (docencia) */
+.dw-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.dw-tab {
+  padding: 9px 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--muted, #6b7280);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.dw-tab.is-active {
+  color: var(--text, #111827);
+  font-weight: 600;
+  border-bottom-color: var(--primary, #2563eb);
+}
+.dw-card {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.dw-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.dw-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px 14px;
+}
+.dw-attend {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+.dw-attend th,
+.dw-attend td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+}
+.dw-attend select {
+  min-width: 130px;
+}
+.dw-gradetable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+.dw-gradetable th,
+.dw-gradetable td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  text-align: left;
+}
+.dw-gradetable input[type="number"] {
+  width: 80px;
+}
+.dw-avg {
+  font-weight: 600;
+}
+@media (max-width: 640px) {
+  .dw-card { padding: 12px; }
+}
