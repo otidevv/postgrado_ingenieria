@@ -23,6 +23,7 @@ model User {
   roles    UserRole[]
   sessions Session[]
   teacherProfile TeacherProfile?
+  studentProfile StudentProfile?
 
   reportedIncidents Incident[]         @relation("IncidentReporter")
   assignedIncidents Incident[]         @relation("IncidentAssignee")
@@ -117,6 +118,44 @@ model TeacherProfile {
 
   user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   modules DiplomaModule[]
+}
+
+// ─────────────────────────── Matrículas ───────────────────────────
+
+model StudentProfile {
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  docType   IdDocType @default(DNI)
+  docNumber String
+  phone     String?
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollments Enrollment[]
+
+  @@index([docNumber])
+}
+
+enum EnrollmentStatus {
+  active     // cursando
+  withdrawn  // retirado (conserva historial, pierde acceso al aula)
+  completed  // concluido
+}
+
+model Enrollment {
+  id            String           @id @default(cuid())
+  studentId     String
+  diplomaId     String
+  applicationId String?          @unique // postulación de origen; null = alta manual
+  status        EnrollmentStatus @default(active)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  student     StudentProfile      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  diploma     Diploma             @relation(fields: [diplomaId], references: [id], onDelete: Restrict)
+  application DiplomaApplication? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+
+  @@unique([studentId, diplomaId])
+  @@index([diplomaId])
 }
 
 // ─────────────────────────── Incident reporting ───────────────────────────
@@ -275,6 +314,7 @@ model Diploma {
 
   modules      DiplomaModule[]
   applications DiplomaApplication[]
+  enrollments  Enrollment[]
 
   @@index([status])
 }
@@ -361,6 +401,7 @@ model DiplomaApplication {
   diploma    Diploma               @relation(fields: [diplomaId], references: [id], onDelete: Cascade)
   reviewedBy User?                 @relation("ApplicationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
   documents  ApplicationDocument[]
+  enrollment Enrollment?
 
   @@unique([diplomaId, docNumber]) // una postulación por documento y diplomado
   @@index([diplomaId])

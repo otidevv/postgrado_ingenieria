@@ -98,6 +98,31 @@ export const PERMISSIONS: PermissionDef[] = [
     description: "Cambiar el estado y anotar la revisión de las postulaciones",
     category: "Postulaciones",
   },
+  {
+    key: "enrollments.read",
+    name: "Ver matrículas",
+    description: "Consultar los estudiantes matriculados en los diplomados",
+    category: "Matrículas",
+  },
+  {
+    key: "enrollments.write",
+    name: "Gestionar matrículas",
+    description: "Matricular estudiantes y cambiar el estado de sus matrículas",
+    category: "Matrículas",
+  },
+  {
+    key: "teaching.manage",
+    name: "Gestionar mi docencia",
+    description:
+      "Administrar sesiones, asistencia, evaluaciones, notas y materiales de los módulos asignados como docente",
+    category: "Docencia",
+  },
+  {
+    key: "aula.view",
+    name: "Acceder a mi aula",
+    description: "Ver los cursos, notas, asistencia y trabajos propios como estudiante",
+    category: "Aula",
+  },
 ];
 
 export type PermissionKey = (typeof PERMISSIONS)[number]["key"];
@@ -128,6 +153,8 @@ export const ROLE_DEFS = [
       "diplomas.write",
       "applications.read",
       "applications.write",
+      "enrollments.read",
+      "enrollments.write",
     ],
   },
   {
@@ -155,6 +182,7 @@ export const ROLE_DEFS = [
       "incidents.read",
       "diplomas.read",
       "applications.read",
+      "enrollments.read",
     ],
   },
   {
@@ -163,7 +191,15 @@ export const ROLE_DEFS = [
     description:
       "Docente de posgrado. Puede consultar los diplomados; su panel de gestión llega en una fase posterior.",
     system: true,
-    permissions: ["diplomas.read"],
+    permissions: ["diplomas.read", "teaching.manage"],
+  },
+  {
+    key: "estudiante",
+    name: "Estudiante",
+    description:
+      "Estudiante matriculado en un diplomado. Accede a su aula (notas, asistencia, trabajos).",
+    system: true,
+    permissions: ["aula.view"],
   },
   {
     key: "reporter",
