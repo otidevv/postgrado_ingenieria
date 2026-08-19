@@ -10,6 +10,7 @@ import type { ActionResult, TeacherInput, TeacherProfileInput } from "./types";
 
 const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const DOCENTE_ROLE_KEY = "docente";
+const SUPERADMIN_KEY = "superadmin";
 
 class Denied extends Error {
   constructor(message: string) {
@@ -76,13 +77,75 @@ function validateProfile(
   };
 }
 
+async function ensureSuperadminRemains(
+  tx: Prisma.TransactionClient,
+): Promise<void> {
+  const remaining = await tx.user.count({
+    where: {
+      active: true,
+      roles: { some: { role: { key: SUPERADMIN_KEY } } },
+    },
+  });
+  if (remaining < 1) {
+    throw new Denied(
+      "Debe existir al menos un superadministrador activo. Acción cancelada.",
+    );
+  }
+}
+
+// Returns true if `userId` has the superadmin role.
+async function isTargetSuper(userId: string): Promise<boolean> {
+  const u = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { roles: { select: { role: { select: { key: true } } } } },
+  });
+  return !!u?.roles.some((ur) => ur.role.key === SUPERADMIN_KEY);
+}
+
+function meIsSuper(me: CurrentUser): boolean {
+  return me.roles.some((r) => r.key === SUPERADMIN_KEY);
+}
+
+function isSerializationFailure(e: unknown): boolean {
+  return (
+    e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2034"
+  );
+}
+
+/**
+ * Run a transaction at Serializable isolation, retrying on write-conflict.
+ * Serializable is required for the "≥1 active superadmin" invariant: under the
+ * default Read Committed, two concurrent removals each count the other's
+ * still-active super and both pass, leaving zero (write skew). Serializable
+ * makes Postgres abort one of the conflicting pair instead.
+ */
+async function serializableTx<T>(
+  fn: (tx: Prisma.TransactionClient) => Promise<T>,
+): Promise<T> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await prisma.$transaction(fn, {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      });
+    } catch (e) {
+      if (isSerializationFailure(e)) {
+        lastErr = e;
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw lastErr;
+}
+
 /* ─────────────────────────────── createTeacher ─────────────────────────────── */
 
 export async function createTeacher(
   input: TeacherInput,
 ): Promise<ActionResult<{ id: string }>> {
   try {
-    await authorize("users.write");
+    const me = await authorize("users.write");
 
     const name = (input.name ?? "").trim();
     const email = (input.email ?? "").trim().toLowerCase();
@@ -121,6 +184,10 @@ export async function createTeacher(
           error: "EXISTING_USER",
           fieldErrors: { email: "Este correo ya pertenece a un usuario." },
         };
+      }
+      // C2: Converting an existing user requires users.assign-roles permission.
+      if (!me.permissions.has("users.assign-roles")) {
+        return fail("Se requiere permiso para asignar roles.");
       }
       const created = await prisma.$transaction(async (tx) => {
         await tx.userRole.upsert({
@@ -207,10 +274,22 @@ export async function setTeacherActive(
     if (profile.userId === me.id && !active) {
       return fail("No puedes suspender tu propia cuenta.");
     }
-    await prisma.user.update({
-      where: { id: profile.userId },
-      data: { active },
+
+    // Lateral escalation guard: a non-superadmin cannot suspend/reactivate a superadmin.
+    if (profile.userId !== me.id && !meIsSuper(me) && (await isTargetSuper(profile.userId))) {
+      return fail(
+        "Solo un superadministrador puede modificar el estado de otro superadministrador.",
+      );
+    }
+
+    await serializableTx(async (tx) => {
+      await tx.user.update({
+        where: { id: profile.userId },
+        data: { active },
+      });
+      if (!active) await ensureSuperadminRemains(tx);
     });
+
     refresh();
     return ok();
   } catch (e) {
