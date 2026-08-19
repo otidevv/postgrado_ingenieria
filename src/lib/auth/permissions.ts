@@ -158,6 +158,14 @@ export const ROLE_DEFS = [
     ],
   },
   {
+    key: "docente",
+    name: "Docente",
+    description:
+      "Docente de posgrado. Puede consultar los diplomados; su panel de gestión llega en una fase posterior.",
+    system: true,
+    permissions: ["diplomas.read"],
+  },
+  {
     key: "reporter",
     name: "Reportante",
     description:
