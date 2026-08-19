@@ -32,4 +32,5 @@ export const SIDEBAR_NAV: SidebarItem[] = [
   { id: "postulaciones", label: "Postulaciones", icon: "inbox", href: "/postulaciones", perm: "applications.read" },
   { id: "matriculas", label: "Matrículas", icon: "folder", href: "/matriculas", perm: "enrollments.read" },
   { id: "docencia", label: "Mi docencia", icon: "rules", href: "/docencia", perm: "teaching.manage" },
+  { id: "aula", label: "Mi aula", icon: "apps", href: "/aula", perm: "aula.view" },
 ];
