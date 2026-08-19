@@ -309,3 +309,80 @@ export async function saveGrade(
     return { ok: false, error: "No se pudo guardar la nota." };
   }
 }
+
+/* ─────────────────────────────── materiales ─────────────────────────────── */
+
+export async function saveMaterial(
+  moduleId: string,
+  input: { id: string | null; title: string; url: string },
+): Promise<ActionResult<{ id: string }>> {
+  try {
+    const auth = await authorizeOwnedModule(moduleId);
+    if (!auth.ok) return auth;
+
+    const title = (input.title ?? "").trim();
+    const url = (input.url ?? "").trim();
+    const fieldErrors: Record<string, string> = {};
+    if (title.length < 2 || title.length > 200) fieldErrors.title = "Indica el título.";
+    if (!/^https?:\/\/.+/.test(url)) fieldErrors.url = "Debe ser una URL http(s) válida.";
+    if (Object.keys(fieldErrors).length > 0) {
+      return { ok: false, error: "Revisa los campos marcados.", fieldErrors };
+    }
+
+    let id: string;
+    if (input.id) {
+      const updated = await prisma.moduleMaterial.updateMany({
+        where: { id: input.id, moduleId },
+        data: { title, url },
+      });
+      if (updated.count === 0) return { ok: false, error: "Material no encontrado." };
+      id = input.id;
+    } else {
+      const created = await prisma.$transaction(
+        async (tx) => {
+          const count = await tx.moduleMaterial.count({ where: { moduleId } });
+          return tx.moduleMaterial.create({
+            data: { moduleId, title, url, order: count + 1 },
+            select: { id: true },
+          });
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+      id = created.id;
+    }
+    refresh(moduleId);
+    return { ok: true, data: { id } };
+  } catch (e) {
+    console.error("saveMaterial", e);
+    return { ok: false, error: "No se pudo guardar el material." };
+  }
+}
+
+export async function deleteMaterial(
+  moduleId: string,
+  materialId: string,
+): Promise<ActionResult> {
+  try {
+    const auth = await authorizeOwnedModule(moduleId);
+    if (!auth.ok) return auth;
+
+    const material = await prisma.moduleMaterial.findFirst({
+      where: { id: materialId, moduleId },
+      select: { id: true, order: true },
+    });
+    if (!material) return { ok: false, error: "Material no encontrado." };
+
+    await prisma.$transaction(async (tx) => {
+      await tx.moduleMaterial.delete({ where: { id: material.id } });
+      await tx.moduleMaterial.updateMany({
+        where: { moduleId, order: { gt: material.order } },
+        data: { order: { decrement: 1 } },
+      });
+    });
+    refresh(moduleId);
+    return { ok: true };
+  } catch (e) {
+    console.error("deleteMaterial", e);
+    return { ok: false, error: "No se pudo eliminar el material." };
+  }
+}

@@ -10,7 +10,9 @@ import type {
   SubmissionInfo,
 } from "../types";
 import { GradesTab } from "./GradesTab";
+import { MaterialsTab } from "./MaterialsTab";
 import { SessionsTab } from "./SessionsTab";
+import { StudentsTab } from "./StudentsTab";
 
 export type WorkspaceProps = {
   moduleId: string;
@@ -59,11 +61,17 @@ export function ModuleWorkspace(props: WorkspaceProps) {
           grades={props.grades}
         />
       )}
-      {/* Pestañas de materiales y estudiantes (T5) se montan aquí */}
-      {(tab === "materiales" || tab === "estudiantes") && (
-        <div className="dw-card">
-          <p className="dtable__muted">Disponible en la siguiente tarea del plan.</p>
-        </div>
+      {tab === "materiales" && (
+        <MaterialsTab moduleId={props.moduleId} materials={props.materials} />
+      )}
+      {tab === "estudiantes" && (
+        <StudentsTab
+          roster={props.roster}
+          sessions={props.sessions}
+          assessments={props.assessments}
+          grades={props.grades}
+          submissions={props.submissions}
+        />
       )}
     </div>
   );
