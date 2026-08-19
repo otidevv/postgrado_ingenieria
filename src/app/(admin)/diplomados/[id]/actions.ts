@@ -39,6 +39,40 @@ function nonNegInt(v: unknown, field: string, errs: Record<string, string>, max 
   return n;
 }
 
+function isSerializationFailure(e: unknown): boolean {
+  return (
+    e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2034"
+  );
+}
+
+/**
+ * Run a transaction at Serializable isolation, retrying on write-conflict.
+ * Serializable is required for the "order es 1..n sin huecos ni duplicados"
+ * invariant: bajo Read Committed, dos creaciones concurrentes de módulos en
+ * el mismo diplomado pueden leer el mismo count y crear dos módulos con el
+ * mismo order (no hay unique en [diplomaId, order]). Serializable hace que
+ * Postgres aborte una de las transacciones en conflicto en vez de eso.
+ */
+async function serializableTx<T>(
+  fn: (tx: Prisma.TransactionClient) => Promise<T>,
+): Promise<T> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await prisma.$transaction(fn, {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      });
+    } catch (e) {
+      if (isSerializationFailure(e)) {
+        lastErr = e;
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw lastErr;
+}
+
 /* ─────────────────────────── updateDiplomaGeneral ─────────────────────────── */
 
 export async function updateDiplomaGeneral(
@@ -186,7 +220,7 @@ export async function saveModule(
 
   const diploma = await prisma.diploma.findUnique({
     where: { id: diplomaId },
-    select: { slug: true, _count: { select: { modules: true } } },
+    select: { slug: true },
   });
   if (!diploma) return { ok: false, error: "Diplomado no encontrado." };
 
@@ -225,9 +259,12 @@ export async function saveModule(
       });
       id = updated.id;
     } else {
-      const created = await prisma.diplomaModule.create({
-        data: { ...data, diplomaId, order: diploma._count.modules + 1 },
-        select: { id: true },
+      const created = await serializableTx(async (tx) => {
+        const count = await tx.diplomaModule.count({ where: { diplomaId } });
+        return tx.diplomaModule.create({
+          data: { ...data, diplomaId, order: count + 1 },
+          select: { id: true },
+        });
       });
       id = created.id;
     }
