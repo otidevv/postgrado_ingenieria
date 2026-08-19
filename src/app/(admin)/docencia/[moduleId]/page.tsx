@@ -38,6 +38,7 @@ export default async function Page({ params }: { params: Promise<{ moduleId: str
     prisma.submission.findMany({
       where: { assessment: { moduleId } },
       select: {
+        id: true,
         enrollmentId: true,
         assessmentId: true,
         fileName: true,
@@ -87,6 +88,7 @@ export default async function Page({ params }: { params: Promise<{ moduleId: str
   }
 
   const submissionRows: SubmissionInfo[] = submissions.map((s) => ({
+    id: s.id,
     enrollmentId: s.enrollmentId,
     assessmentId: s.assessmentId,
     fileName: s.fileName,

@@ -36,6 +36,7 @@ export type MaterialRow = {
 };
 
 export type SubmissionInfo = {
+  id: string;
   enrollmentId: string;
   assessmentId: string;
   fileName: string | null;

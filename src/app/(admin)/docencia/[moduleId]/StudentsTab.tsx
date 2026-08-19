@@ -71,7 +71,28 @@ export function StudentsTab({
                   <td>{pct === null ? "—" : `${pct}% (${attended}/${recorded})`}</td>
                   <td className="dw-avg">{avg === null ? "—" : avg.toFixed(2)}</td>
                   {submittable.length > 0 && (
-                    <td>{delivered}/{submittable.length}</td>
+                    <td>
+                      <div>{delivered}/{submittable.length}</div>
+                      {submittable.map((a) => {
+                        const sub = submissions.find(
+                          (s) => s.assessmentId === a.id && s.enrollmentId === r.enrollmentId,
+                        );
+                        if (!sub) return null;
+                        return (
+                          <div key={a.id} style={{ fontSize: 12 }}>
+                            {sub.fileName ? (
+                              <a className="linkbtn" href={`/api/entregas/${sub.id}`}>
+                                {a.title.length > 18 ? `${a.title.slice(0, 18)}…` : a.title}: {sub.fileName}
+                              </a>
+                            ) : sub.linkUrl ? (
+                              <a className="linkbtn" href={sub.linkUrl} target="_blank" rel="noopener noreferrer">
+                                {a.title.length > 18 ? `${a.title.slice(0, 18)}…` : a.title}: enlace
+                              </a>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </td>
                   )}
                 </tr>
               );
