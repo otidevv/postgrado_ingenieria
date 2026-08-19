@@ -45,6 +45,30 @@ export default async function DiplomaPage({ params }: Params) {
 
   const moduleCount = d.modules.length;
 
+  const assignedTeachers = Array.from(
+    new Map(
+      d.modules
+        .filter((m) => m.teacher && m.teacher.user.active)
+        .map((m) => [
+          m.teacher!.id,
+          {
+            name: `${m.teacher!.academicDegree} ${m.teacher!.user.name}`,
+            role: m.teacher!.specialty ?? "Docente · Facultad de Ingeniería",
+            photoUrl: m.teacher!.photoUrl,
+          },
+        ]),
+    ).values(),
+  );
+
+  const instructorCards =
+    assignedTeachers.length > 0
+      ? assignedTeachers
+      : d.instructors.map((name) => ({
+          name,
+          role: "Docente · Facultad de Ingeniería",
+          photoUrl: null as string | null,
+        }));
+
   const STATS: { icon: IconName; v: string; l: string }[] = [
     { icon: "folder", v: `${moduleCount} módulos`, l: "Plan modular certificable" },
     { icon: "clock", v: `${d.credits} créditos`, l: `${d.totalHours} horas académicas` },
@@ -248,6 +272,10 @@ export default async function DiplomaPage({ params }: Params) {
                   credits: m.credits,
                   summary: m.summary,
                   topics: m.topics,
+                  teacherLabel:
+                    m.teacher && m.teacher.user.active
+                      ? `${m.teacher.academicDegree} ${m.teacher.user.name}`
+                      : null,
                 }))}
               />
 
@@ -268,32 +296,40 @@ export default async function DiplomaPage({ params }: Params) {
 
             <aside className="dp-plan__side">
               <div className="dp-side-card" data-reveal>
-                {d.instructors.length > 0 && (
+                {instructorCards.length > 0 && (
                   <>
                     <h3 className="dp-side__h">
-                      {d.instructors.length === 1 ? "Instructor" : "Instructores"}
+                      {instructorCards.length === 1 ? "Instructor" : "Instructores"}
                     </h3>
                     <ul className="dp-inst">
-                      {d.instructors.slice(0, 4).map((name) => (
-                        <li key={name} className="dp-inst__item">
-                          <span
-                            className="dp-inst__avatar"
-                            style={{ background: avatarColor(name) }}
-                          >
-                            {initialsFor(name)}
-                          </span>
-                          <span className="dp-inst__info">
-                            <span className="dp-inst__name">{name}</span>
-                            <span className="dp-inst__role">
-                              Docente · Facultad de Ingeniería
+                      {instructorCards.slice(0, 4).map((t) => (
+                        <li key={t.name} className="dp-inst__item">
+                          {t.photoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              className="dp-inst__avatar"
+                              src={t.photoUrl}
+                              alt={t.name}
+                              style={{ objectFit: "cover" }}
+                            />
+                          ) : (
+                            <span
+                              className="dp-inst__avatar"
+                              style={{ background: avatarColor(t.name) }}
+                            >
+                              {initialsFor(t.name)}
                             </span>
+                          )}
+                          <span className="dp-inst__info">
+                            <span className="dp-inst__name">{t.name}</span>
+                            <span className="dp-inst__role">{t.role}</span>
                           </span>
                         </li>
                       ))}
                     </ul>
-                    {d.instructors.length > 4 && (
+                    {instructorCards.length > 4 && (
                       <p className="dp-inst__more">
-                        y {d.instructors.length - 4} docentes más
+                        y {instructorCards.length - 4} docentes más
                       </p>
                     )}
                     <div className="dp-side__divider" />

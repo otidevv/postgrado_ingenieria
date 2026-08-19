@@ -37,10 +37,19 @@ export async function getPublishedDiplomas(): Promise<DiplomaCard[]> {
   }));
 }
 
-/** Diplomado publicado por slug, con sus módulos ordenados. Null si no existe. */
+/** Diplomado publicado por slug, con módulos ordenados y su docente. Null si no existe. */
 export async function getPublishedDiplomaBySlug(slug: string) {
   return prisma.diploma.findFirst({
     where: { slug, status: "published" },
-    include: { modules: { orderBy: { order: "asc" } } },
+    include: {
+      modules: {
+        orderBy: { order: "asc" },
+        include: {
+          teacher: {
+            include: { user: { select: { name: true, active: true } } },
+          },
+        },
+      },
+    },
   });
 }

@@ -14,6 +14,7 @@ export type CourseModule = {
   credits: number;
   summary: string;
   topics: string[];
+  teacherLabel: string | null;
 };
 
 export function ModuleAccordion({ modules }: { modules: CourseModule[] }) {
@@ -53,6 +54,11 @@ export function ModuleAccordion({ modules }: { modules: CourseModule[] }) {
             <div className="dp-course__detailwrap" aria-hidden={!isOpen}>
               <div className="dp-course__detail">
                 <p className="dp-course__summary">{m.summary}</p>
+                {m.teacherLabel && (
+                  <p className="dp-course__summary" style={{ marginTop: 4 }}>
+                    <strong>Docente:</strong> {m.teacherLabel}
+                  </p>
+                )}
                 {m.topics.length > 0 && (
                   <ul className="dp-course__topics">
                     {m.topics.map((t, i) => (
