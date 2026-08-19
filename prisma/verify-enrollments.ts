@@ -23,6 +23,11 @@ async function main() {
 
   console.log("Matrículas:", await prisma.enrollment.count());
   console.log("Perfiles de estudiante:", await prisma.studentProfile.count());
+  console.log("Sesiones:", await prisma.moduleSession.count());
+  console.log("Evaluaciones:", await prisma.assessment.count());
+  console.log("Notas:", await prisma.grade.count());
+  console.log("Materiales:", await prisma.moduleMaterial.count());
+  console.log("Entregas:", await prisma.submission.count());
   await prisma.$disconnect();
 }
 

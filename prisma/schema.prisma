@@ -153,9 +153,113 @@ model Enrollment {
   student     StudentProfile      @relation(fields: [studentId], references: [id], onDelete: Cascade)
   diploma     Diploma             @relation(fields: [diplomaId], references: [id], onDelete: Restrict)
   application DiplomaApplication? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  attendance  AttendanceRecord[]
+  grades      Grade[]
+  submissions Submission[]
 
   @@unique([studentId, diplomaId])
   @@index([diplomaId])
+}
+
+// ─────────────────────────── Docencia ───────────────────────────
+
+model ModuleSession {
+  id       String   @id @default(cuid())
+  moduleId String
+  date     DateTime // fecha de la clase
+  topic    String   // tema tratado
+  order    Int
+
+  module     DiplomaModule      @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  attendance AttendanceRecord[]
+
+  @@index([moduleId])
+}
+
+enum AttendanceStatus {
+  presente
+  tardanza
+  falta
+  justificada
+}
+
+model AttendanceRecord {
+  sessionId    String
+  enrollmentId String
+  status       AttendanceStatus
+
+  session    ModuleSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  enrollment Enrollment    @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@id([sessionId, enrollmentId])
+  @@index([enrollmentId])
+}
+
+enum AssessmentKind {
+  tarea
+  trabajo
+  examen
+  participacion
+}
+
+model Assessment {
+  id               String         @id @default(cuid())
+  moduleId         String
+  title            String
+  description      String?
+  kind             AssessmentKind @default(tarea)
+  weight           Int            // % del promedio del módulo (0–100)
+  dueDate          DateTime?
+  allowsSubmission Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+
+  module      DiplomaModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  grades      Grade[]
+  submissions Submission[]
+
+  @@index([moduleId])
+}
+
+model Grade {
+  assessmentId String
+  enrollmentId String
+  score        Decimal  @db.Decimal(4, 2) // 0.00–20.00
+  feedback     String?
+  gradedAt     DateTime @default(now())
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@id([assessmentId, enrollmentId])
+  @@index([enrollmentId])
+}
+
+model ModuleMaterial {
+  id       String @id @default(cuid())
+  moduleId String
+  title    String
+  url      String
+  order    Int    @default(0)
+
+  module DiplomaModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@index([moduleId])
+}
+
+model Submission {
+  id           String   @id @default(cuid())
+  assessmentId String
+  enrollmentId String
+  fileName     String?  // nombre original mostrado
+  storedPath   String?  // relativo a storage/entregas/
+  linkUrl      String?  // alternativa: entrega por enlace
+  comment      String?
+  submittedAt  DateTime @default(now())
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@unique([assessmentId, enrollmentId])
 }
 
 // ─────────────────────────── Incident reporting ───────────────────────────
@@ -335,6 +439,9 @@ model DiplomaModule {
 
   diploma Diploma @relation(fields: [diplomaId], references: [id], onDelete: Cascade)
   teacher TeacherProfile? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  sessions ModuleSession[]
+  assessments Assessment[]
+  materials ModuleMaterial[]
 
   @@unique([diplomaId, code])
   @@index([diplomaId])
