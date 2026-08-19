@@ -9,6 +9,7 @@ import type {
   SessionRow,
   SubmissionInfo,
 } from "../types";
+import { GradesTab } from "./GradesTab";
 import { SessionsTab } from "./SessionsTab";
 
 export type WorkspaceProps = {
@@ -50,8 +51,16 @@ export function ModuleWorkspace(props: WorkspaceProps) {
       {tab === "sesiones" && (
         <SessionsTab moduleId={props.moduleId} roster={props.roster} sessions={props.sessions} />
       )}
-      {/* Pestañas de notas (T4), materiales y estudiantes (T5) se montan aquí */}
-      {tab !== "sesiones" && (
+      {tab === "notas" && (
+        <GradesTab
+          moduleId={props.moduleId}
+          roster={props.roster}
+          assessments={props.assessments}
+          grades={props.grades}
+        />
+      )}
+      {/* Pestañas de materiales y estudiantes (T5) se montan aquí */}
+      {(tab === "materiales" || tab === "estudiantes") && (
         <div className="dw-card">
           <p className="dtable__muted">Disponible en la siguiente tarea del plan.</p>
         </div>

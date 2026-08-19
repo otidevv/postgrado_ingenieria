@@ -5,7 +5,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/server";
 import { getOwnedModule } from "@/lib/teaching";
-import type { ActionResult, AttendanceStatus } from "../types";
+import type { ActionResult, AssessmentKind, AttendanceStatus } from "../types";
 
 const ATTENDANCE: AttendanceStatus[] = ["presente", "tardanza", "falta", "justificada"];
 
@@ -163,5 +163,149 @@ export async function saveAttendance(
   } catch (e) {
     console.error("saveAttendance", e);
     return { ok: false, error: "No se pudo guardar la asistencia." };
+  }
+}
+
+/* ─────────────────────────────── evaluaciones ─────────────────────────────── */
+
+const KINDS: AssessmentKind[] = ["tarea", "trabajo", "examen", "participacion"];
+
+export async function saveAssessment(
+  moduleId: string,
+  input: {
+    id: string | null;
+    title: string;
+    description: string;
+    kind: AssessmentKind;
+    weight: number;
+    dueDate: string; // "" = sin fecha
+    allowsSubmission: boolean;
+  },
+): Promise<ActionResult<{ id: string }>> {
+  try {
+    const auth = await authorizeOwnedModule(moduleId);
+    if (!auth.ok) return auth;
+
+    const title = (input.title ?? "").trim();
+    const fieldErrors: Record<string, string> = {};
+    if (title.length < 2 || title.length > 200) fieldErrors.title = "Indica el título.";
+    if (!KINDS.includes(input.kind)) fieldErrors.kind = "Tipo no válido.";
+    if (!Number.isInteger(input.weight) || input.weight < 0 || input.weight > 100) {
+      fieldErrors.weight = "Peso entero entre 0 y 100.";
+    }
+    let dueDate: Date | null = null;
+    if ((input.dueDate ?? "").trim() !== "") {
+      dueDate = new Date(input.dueDate);
+      if (Number.isNaN(dueDate.getTime())) fieldErrors.dueDate = "Fecha no válida.";
+    }
+    if (Object.keys(fieldErrors).length > 0) {
+      return { ok: false, error: "Revisa los campos marcados.", fieldErrors };
+    }
+
+    const data = {
+      title,
+      description: (input.description ?? "").trim() || null,
+      kind: input.kind,
+      weight: input.weight,
+      dueDate,
+      allowsSubmission: input.allowsSubmission === true,
+    };
+
+    let id: string;
+    if (input.id) {
+      const updated = await prisma.assessment.updateMany({
+        where: { id: input.id, moduleId },
+        data,
+      });
+      if (updated.count === 0) return { ok: false, error: "Evaluación no encontrada." };
+      id = input.id;
+    } else {
+      const created = await prisma.assessment.create({
+        data: { ...data, moduleId },
+        select: { id: true },
+      });
+      id = created.id;
+    }
+    refresh(moduleId);
+    return { ok: true, data: { id } };
+  } catch (e) {
+    console.error("saveAssessment", e);
+    return { ok: false, error: "No se pudo guardar la evaluación." };
+  }
+}
+
+export async function deleteAssessment(
+  moduleId: string,
+  assessmentId: string,
+): Promise<ActionResult> {
+  try {
+    const auth = await authorizeOwnedModule(moduleId);
+    if (!auth.ok) return auth;
+
+    const deleted = await prisma.assessment.deleteMany({
+      where: { id: assessmentId, moduleId },
+    });
+    if (deleted.count === 0) return { ok: false, error: "Evaluación no encontrada." };
+    refresh(moduleId);
+    return { ok: true };
+  } catch (e) {
+    console.error("deleteAssessment", e);
+    return { ok: false, error: "No se pudo eliminar la evaluación." };
+  }
+}
+
+/* ─────────────────────────────── notas ─────────────────────────────── */
+
+export async function saveGrade(
+  moduleId: string,
+  assessmentId: string,
+  enrollmentId: string,
+  score: number | null,
+  feedback: string,
+): Promise<ActionResult> {
+  try {
+    const auth = await authorizeOwnedModule(moduleId);
+    if (!auth.ok) return auth;
+
+    const assessment = await prisma.assessment.findFirst({
+      where: { id: assessmentId, moduleId },
+      select: { id: true },
+    });
+    if (!assessment) return { ok: false, error: "Evaluación no encontrada." };
+
+    const enrollment = await prisma.enrollment.findFirst({
+      where: { id: enrollmentId, diplomaId: auth.module.diplomaId, status: "active" },
+      select: { id: true },
+    });
+    if (!enrollment) {
+      return { ok: false, error: "La matrícula no está activa en este diplomado." };
+    }
+
+    if (score === null) {
+      await prisma.grade.deleteMany({ where: { assessmentId, enrollmentId } });
+      refresh(moduleId);
+      return { ok: true };
+    }
+
+    const rounded = Math.round(score * 100) / 100;
+    if (Number.isNaN(rounded) || rounded < 0 || rounded > 20) {
+      return { ok: false, error: "La nota debe estar entre 0 y 20." };
+    }
+
+    await prisma.grade.upsert({
+      where: { assessmentId_enrollmentId: { assessmentId, enrollmentId } },
+      update: { score: rounded, feedback: feedback.trim() || null, gradedAt: new Date() },
+      create: {
+        assessmentId,
+        enrollmentId,
+        score: rounded,
+        feedback: feedback.trim() || null,
+      },
+    });
+    refresh(moduleId);
+    return { ok: true };
+  } catch (e) {
+    console.error("saveGrade", e);
+    return { ok: false, error: "No se pudo guardar la nota." };
   }
 }

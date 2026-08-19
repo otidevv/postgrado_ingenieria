@@ -55,16 +55,4 @@ export async function getActiveRoster(diplomaId: string): Promise<RosterStudent[
  * Promedio ponderado sobre los ítems CALIFICADOS (score ≠ null).
  * Null si no hay ninguno calificado o la suma de pesos calificados es 0.
  */
-export function weightedAverage(
-  items: Array<{ weight: number; score: number | null }>,
-): number | null {
-  let sum = 0;
-  let weights = 0;
-  for (const it of items) {
-    if (it.score === null) continue;
-    sum += it.score * it.weight;
-    weights += it.weight;
-  }
-  if (weights === 0) return null;
-  return Math.round((sum / weights) * 100) / 100;
-}
+export { weightedAverage } from "./teaching-client";
