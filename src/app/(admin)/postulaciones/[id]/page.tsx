@@ -5,6 +5,7 @@ import { requirePermission } from "@/lib/auth/server";
 import { Icon } from "@/components/admin/Icon";
 import { APPLICATION_STATUS, GENDERS, fmtBytes } from "@/lib/applications";
 import { ReviewPanel } from "./ReviewPanel";
+import { EnrollPanel } from "./EnrollPanel";
 import "../postulaciones.css";
 
 export const metadata = { title: "Detalle de postulación · UNAMAD Admin" };
@@ -51,11 +52,13 @@ export default async function Page({ params }: Params) {
       diploma: { select: { title: true, slug: true, code: true } },
       documents: { orderBy: { createdAt: "asc" } },
       reviewedBy: { select: { name: true } },
+      enrollment: { select: { id: true, status: true } },
     },
   });
   if (!a) notFound();
 
   const canWrite = me.permissions.has("applications.write");
+  const canEnroll = me.permissions.has("enrollments.write");
   const statusMeta = APPLICATION_STATUS.find((s) => s.value === a.status)!;
   const genderLabel = GENDERS.find((g) => g.value === a.gender)?.label ?? a.gender;
 
@@ -153,6 +156,13 @@ export default async function Page({ params }: Params) {
               </ul>
             )}
           </section>
+
+          <EnrollPanel
+            applicationId={a.id}
+            status={a.status}
+            canEnroll={canEnroll}
+            existing={a.enrollment}
+          />
 
           <ReviewPanel
             id={a.id}
