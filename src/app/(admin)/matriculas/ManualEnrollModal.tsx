@@ -62,7 +62,7 @@ export function ManualEnrollModal({ diplomas, onClose, onSubmit }: Props) {
     ) : null;
 
   return (
-    <div className="modal-backdrop" onClick={done ? onClose : undefined}>
+    <div className="modal-backdrop" onClick={done ? undefined : onClose}>
       <form className="modal" onClick={(e) => e.stopPropagation()} onSubmit={submit}>
         <header className="modal__head">
           <h2>{done ? "Matrícula creada" : "Matrícula manual"}</h2>
