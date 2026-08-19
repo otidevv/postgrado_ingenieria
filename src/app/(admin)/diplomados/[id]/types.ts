@@ -78,3 +78,9 @@ export type MetricsInput = {
   moduleFee: number;
   certificationFee: number;
 };
+
+export type ListsInput = {
+  objectives: string[];
+  requirements: string[];
+  graduateProfile: string[];
+};

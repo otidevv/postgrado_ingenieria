@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/server";
-import type { ActionResult, GeneralInput, MetricsInput } from "./types";
+import type { ActionResult, GeneralInput, ListsInput, MetricsInput } from "./types";
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -123,6 +123,40 @@ export async function updateDiplomaMetrics(
 
   const updated = await prisma.diploma
     .update({ where: { id }, data, select: { slug: true } })
+    .catch(() => null);
+  if (!updated) return { ok: false, error: "Diplomado no encontrado." };
+  revalidateDiploma(updated.slug);
+  return { ok: true };
+}
+
+/* ──────────────────────────── updateDiplomaLists ──────────────────────────── */
+
+function cleanList(v: unknown, max = 30): string[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .filter((x): x is string => typeof x === "string")
+    .map((x) => x.trim())
+    .filter((x) => x.length > 0 && x.length <= 500)
+    .slice(0, max);
+}
+
+export async function updateDiplomaLists(
+  id: string,
+  input: ListsInput,
+): Promise<ActionResult> {
+  const auth = await authorizeWrite();
+  if (!auth.ok) return auth;
+
+  const updated = await prisma.diploma
+    .update({
+      where: { id },
+      data: {
+        objectives: cleanList(input.objectives),
+        requirements: cleanList(input.requirements),
+        graduateProfile: cleanList(input.graduateProfile),
+      },
+      select: { slug: true },
+    })
     .catch(() => null);
   if (!updated) return { ok: false, error: "Diplomado no encontrado." };
   revalidateDiploma(updated.slug);
