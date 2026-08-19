@@ -22,6 +22,7 @@ model User {
 
   roles    UserRole[]
   sessions Session[]
+  teacherProfile TeacherProfile?
 
   reportedIncidents Incident[]         @relation("IncidentReporter")
   assignedIncidents Incident[]         @relation("IncidentAssignee")
@@ -101,6 +102,21 @@ model Session {
 enum ClientType {
   web
   mobile
+}
+
+// ─────────────────────────── Docentes ───────────────────────────
+
+model TeacherProfile {
+  id             String  @id @default(cuid())
+  userId         String  @unique
+  academicDegree String            // "Dr.", "Mg.", "Ing."
+  specialty      String?           // p. ej. "Redes y Seguridad"
+  bio            String?
+  photoUrl       String?
+  orcid          String?
+
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  modules DiplomaModule[]
 }
 
 // ─────────────────────────── Incident reporting ───────────────────────────
@@ -275,11 +291,14 @@ model DiplomaModule {
   credits    Int               // ej. 4
   summary    String            // sumilla del curso
   topics     String[]          // temas principales del contenido
+  teacherId  String?
 
   diploma Diploma @relation(fields: [diplomaId], references: [id], onDelete: Cascade)
+  teacher TeacherProfile? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
 
   @@unique([diplomaId, code])
   @@index([diplomaId])
+  @@index([teacherId])
 }
 
 // ─────────────────────────── Postulaciones a diplomados ───────────────────────────
