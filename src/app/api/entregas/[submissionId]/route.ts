@@ -33,7 +33,9 @@ export async function GET(
   const isTeacher = sub.assessment.module.teacher?.userId === me.id;
   const isAdmin = me.permissions.has("enrollments.read");
   if (!isOwner && !isTeacher && !isAdmin) {
-    return NextResponse.json({ error: "Sin acceso a esta entrega." }, { status: 403 });
+    // Mismo 404 que "no existe": no revelar a un usuario sin acceso que la
+    // entrega existe (evita un oráculo de existencia).
+    return NextResponse.json({ error: "Entrega no encontrada." }, { status: 404 });
   }
 
   try {
@@ -42,7 +44,7 @@ export async function GET(
     return new NextResponse(new Uint8Array(buf), {
       headers: {
         "Content-Type": sub.mimeType ?? "application/octet-stream",
-        "Content-Disposition": `attachment; filename="${encodeURIComponent(fileName)}"`,
+        "Content-Disposition": `attachment; filename="entrega"; filename*=UTF-8''${encodeURIComponent(fileName)}`,
         "Cache-Control": "private, no-store",
       },
     });

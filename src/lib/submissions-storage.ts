@@ -50,10 +50,14 @@ export async function saveSubmissionFile(
   return { storedPath: `${assessmentId}/${stored}`, sizeBytes: buf.length };
 }
 
-/** Borra el archivo de una entrega; silencioso si ya no existe. */
+/** Borra el archivo de una entrega; silencioso si ya no existe o la ruta es inválida. */
 export async function deleteSubmissionFile(storedPath: string): Promise<void> {
-  const abs = resolveSafe(storedPath);
-  await unlink(abs).catch(() => undefined);
+  try {
+    const abs = resolveSafe(storedPath);
+    await unlink(abs);
+  } catch {
+    // silencioso: no existe, ruta inválida, etc.
+  }
 }
 
 /** Lee un archivo almacenado, bloqueando path traversal. */
