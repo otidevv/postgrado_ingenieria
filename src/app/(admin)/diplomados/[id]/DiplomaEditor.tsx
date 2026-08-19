@@ -5,6 +5,7 @@ import { Icon } from "@/components/admin/Icon";
 import { GeneralSection } from "./GeneralSection";
 import { MetricsSection } from "./MetricsSection";
 import { ListsSection } from "./ListsSection";
+import { ModulesSection } from "./ModulesSection";
 import type { EditorDiploma, EditorModule, EditorPerms, TeacherOption } from "./types";
 
 const STATUS_LABEL: Record<EditorDiploma["status"], string> = {
@@ -51,7 +52,12 @@ export function DiplomaEditor({
       <GeneralSection diploma={diploma} canWrite={perms.canWrite} />
       <MetricsSection diploma={diploma} canWrite={perms.canWrite} />
       <ListsSection diploma={diploma} canWrite={perms.canWrite} />
-      {/* ModulesSection (Task 8) se añade aquí */}
+      <ModulesSection
+        diplomaId={diploma.id}
+        modules={modules}
+        teachers={teachers}
+        canWrite={perms.canWrite}
+      />
     </div>
   );
 }

@@ -84,3 +84,15 @@ export type ListsInput = {
   requirements: string[];
   graduateProfile: string[];
 };
+
+export type ModuleInput = {
+  id: string | null; // null = crear
+  code: string;
+  name: string;
+  summary: string;
+  syncHours: number;
+  asyncHours: number;
+  credits: number;
+  topics: string[];
+  teacherId: string | null;
+};
