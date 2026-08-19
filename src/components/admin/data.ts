@@ -1,4 +1,5 @@
 import type { IconName } from "./Icon";
+import type { PermissionKey } from "@/lib/auth/permissions";
 
 export type AdminNotification = {
   id: string;
@@ -14,6 +15,8 @@ export type SidebarItem = {
   label: string;
   icon: IconName;
   href?: string;
+  /** Permiso necesario para ver el ítem; sin él, visible para cualquier sesión. */
+  perm?: PermissionKey;
   expandable?: boolean;
   dot?: boolean;
   children?: SidebarChild[];
@@ -21,10 +24,10 @@ export type SidebarItem = {
 
 export const SIDEBAR_NAV: SidebarItem[] = [
   { id: "inicio", label: "Inicio", icon: "home", href: "/inicio" },
-  { id: "usuarios", label: "Usuarios", icon: "users", href: "/usuarios" },
-  { id: "roles", label: "Roles", icon: "shield", href: "/roles" },
-  { id: "incidentes", label: "Incidentes", icon: "alert", href: "/incidentes" },
-  { id: "diplomados", label: "Diplomados", icon: "cloud", href: "/diplomados" },
-  { id: "docentes", label: "Docentes", icon: "user", href: "/docentes" },
-  { id: "postulaciones", label: "Postulaciones", icon: "inbox", href: "/postulaciones" },
+  { id: "usuarios", label: "Usuarios", icon: "users", href: "/usuarios", perm: "users.read" },
+  { id: "roles", label: "Roles", icon: "shield", href: "/roles", perm: "roles.read" },
+  { id: "incidentes", label: "Incidentes", icon: "alert", href: "/incidentes", perm: "incidents.read" },
+  { id: "diplomados", label: "Diplomados", icon: "cloud", href: "/diplomados", perm: "diplomas.read" },
+  { id: "docentes", label: "Docentes", icon: "user", href: "/docentes", perm: "users.read" },
+  { id: "postulaciones", label: "Postulaciones", icon: "inbox", href: "/postulaciones", perm: "applications.read" },
 ];

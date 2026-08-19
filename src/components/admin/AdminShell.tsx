@@ -10,12 +10,13 @@ import type { AdminNotification } from "./data";
 type Props = {
   user: { name: string; email: string; roles: string[] };
   notifications: AdminNotification[];
+  perms: string[];
   children: ReactNode;
 };
 
 const MOBILE_BREAKPOINT = 900;
 
-export function AdminShell({ user, notifications, children }: Props) {
+export function AdminShell({ user, notifications, perms, children }: Props) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -68,6 +69,7 @@ export function AdminShell({ user, notifications, children }: Props) {
         <Sidebar
           collapsed={sidebarCollapsed && !isMobile}
           mobileOpen={isMobile && mobileOpen}
+          perms={perms}
         />
         <main className="main">{children}</main>
       </div>

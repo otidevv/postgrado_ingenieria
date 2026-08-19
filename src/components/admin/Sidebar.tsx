@@ -9,6 +9,8 @@ import { SIDEBAR_NAV } from "./data";
 type Props = {
   collapsed: boolean;
   mobileOpen?: boolean;
+  /** Permisos del usuario actual; los ítems con `perm` fuera de esta lista se ocultan. */
+  perms: string[];
 };
 
 function pathToActiveId(pathname: string): string {
@@ -16,12 +18,16 @@ function pathToActiveId(pathname: string): string {
   return segment;
 }
 
-export function Sidebar({ collapsed, mobileOpen = false }: Props) {
+export function Sidebar({ collapsed, mobileOpen = false, perms }: Props) {
   const pathname = usePathname();
   const activeId = pathToActiveId(pathname);
 
+  const nav = SIDEBAR_NAV.filter(
+    (item) => !item.perm || perms.includes(item.perm),
+  );
+
   const parentOfActive =
-    SIDEBAR_NAV.find((g) =>
+    nav.find((g) =>
       g.children?.some((c) => c.id === activeId),
     )?.id ?? null;
 
@@ -38,7 +44,7 @@ export function Sidebar({ collapsed, mobileOpen = false }: Props) {
       }`}
     >
       <nav className="sidebar__nav">
-        {SIDEBAR_NAV.map((item) => {
+        {nav.map((item) => {
           const isOpen = openId === item.id;
           const isSelf = activeId === item.id;
           const hasActiveChild =

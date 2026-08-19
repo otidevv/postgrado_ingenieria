@@ -21,6 +21,7 @@ export default async function AdminLayout({
         roles: user.roles.map((r) => r.name),
       }}
       notifications={notifications}
+      perms={[...user.permissions]}
     >
       {children}
     </AdminShell>

@@ -7,7 +7,7 @@ import { Icon } from "@/components/admin/Icon";
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") || "/usuarios";
+  const next = params.get("next") || "/inicio";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

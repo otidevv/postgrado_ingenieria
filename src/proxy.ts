@@ -22,7 +22,7 @@ export async function proxy(request: NextRequest) {
     // If logged in and visiting /login, send them home.
     if (pathname === "/login" && session) {
       const url = request.nextUrl.clone();
-      url.pathname = "/usuarios";
+      url.pathname = "/inicio";
       url.search = "";
       return NextResponse.redirect(url);
     }
