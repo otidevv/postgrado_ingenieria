@@ -285,9 +285,22 @@ export async function deleteModule(moduleId: string): Promise<ActionResult> {
 
   const mod = await prisma.diplomaModule.findUnique({
     where: { id: moduleId },
-    select: { diplomaId: true, order: true, diploma: { select: { slug: true } } },
+    select: {
+      diplomaId: true,
+      order: true,
+      diploma: { select: { slug: true } },
+      _count: { select: { sessions: true, assessments: true } },
+    },
   });
   if (!mod) return { ok: false, error: "Módulo no encontrado." };
+
+  if (mod._count.sessions > 0 || mod._count.assessments > 0) {
+    return {
+      ok: false,
+      error:
+        "Este módulo tiene historial académico (sesiones o evaluaciones); no se puede eliminar. Reasigna o vacía su contenido primero.",
+    };
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.diplomaModule.delete({ where: { id: moduleId } });

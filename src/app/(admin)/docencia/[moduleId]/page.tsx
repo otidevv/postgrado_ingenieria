@@ -47,12 +47,17 @@ export default async function Page({ params }: { params: Promise<{ moduleId: str
     }),
   ]);
 
+  const rosterIds = new Set(roster.map((r) => r.enrollmentId));
   const sessionRows: SessionRow[] = sessions.map((s) => ({
     id: s.id,
     date: s.date.toISOString(),
     topic: s.topic,
     order: s.order,
-    attendance: Object.fromEntries(s.attendance.map((a) => [a.enrollmentId, a.status])),
+    attendance: Object.fromEntries(
+      s.attendance
+        .filter((a) => rosterIds.has(a.enrollmentId))
+        .map((a) => [a.enrollmentId, a.status]),
+    ),
   }));
 
   const assessmentRows: AssessmentRow[] = assessments.map((a) => ({

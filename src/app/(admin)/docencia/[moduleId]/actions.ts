@@ -130,25 +130,22 @@ export async function saveAttendance(
     const clean = (Array.isArray(records) ? records : []).filter(
       (r) => typeof r?.enrollmentId === "string" && ATTENDANCE.includes(r?.status),
     );
-    if (clean.length === 0) return { ok: false, error: "No hay asistencia que guardar." };
 
-    // Solo matrículas ACTIVAS del diplomado del módulo.
-    const valid = await prisma.enrollment.findMany({
-      where: {
-        id: { in: clean.map((r) => r.enrollmentId) },
-        diplomaId: auth.module.diplomaId,
-        status: "active",
-      },
+    // Roster activo del diplomado del módulo (lista completa esperada por el cliente).
+    const roster = await prisma.enrollment.findMany({
+      where: { diplomaId: auth.module.diplomaId, status: "active" },
       select: { id: true },
     });
-    const validSet = new Set(valid.map((v) => v.id));
-    const toSave = clean.filter((r) => validSet.has(r.enrollmentId));
-    if (toSave.length === 0) {
-      return { ok: false, error: "Ninguna matrícula válida para este módulo." };
-    }
+    const rosterSet = new Set(roster.map((v) => v.id));
+    const toSave = clean.filter((r) => rosterSet.has(r.enrollmentId));
 
-    await prisma.$transaction(
-      toSave.map((r) =>
+    // Cualquier miembro del roster activo que no venga en `records` queda
+    // "sin registrar": se borra su AttendanceRecord (si existía) para esta sesión.
+    const savedSet = new Set(toSave.map((r) => r.enrollmentId));
+    const toDelete = [...rosterSet].filter((id) => !savedSet.has(id));
+
+    await prisma.$transaction([
+      ...toSave.map((r) =>
         prisma.attendanceRecord.upsert({
           where: {
             sessionId_enrollmentId: { sessionId, enrollmentId: r.enrollmentId },
@@ -157,7 +154,10 @@ export async function saveAttendance(
           create: { sessionId, enrollmentId: r.enrollmentId, status: r.status },
         }),
       ),
-    );
+      prisma.attendanceRecord.deleteMany({
+        where: { sessionId, enrollmentId: { in: toDelete } },
+      }),
+    ]);
     refresh(moduleId);
     return { ok: true };
   } catch (e) {
@@ -355,6 +355,40 @@ export async function saveMaterial(
   } catch (e) {
     console.error("saveMaterial", e);
     return { ok: false, error: "No se pudo guardar el material." };
+  }
+}
+
+export async function moveMaterial(
+  moduleId: string,
+  materialId: string,
+  dir: "up" | "down",
+): Promise<ActionResult> {
+  try {
+    const auth = await authorizeOwnedModule(moduleId);
+    if (!auth.ok) return auth;
+
+    const material = await prisma.moduleMaterial.findFirst({
+      where: { id: materialId, moduleId },
+      select: { id: true, order: true },
+    });
+    if (!material) return { ok: false, error: "Material no encontrado." };
+
+    const targetOrder = dir === "up" ? material.order - 1 : material.order + 1;
+    const neighbor = await prisma.moduleMaterial.findFirst({
+      where: { moduleId, order: targetOrder },
+      select: { id: true },
+    });
+    if (!neighbor) return { ok: true }; // ya está en el extremo
+
+    await prisma.$transaction([
+      prisma.moduleMaterial.update({ where: { id: neighbor.id }, data: { order: material.order } }),
+      prisma.moduleMaterial.update({ where: { id: material.id }, data: { order: targetOrder } }),
+    ]);
+    refresh(moduleId);
+    return { ok: true };
+  } catch (e) {
+    console.error("moveMaterial", e);
+    return { ok: false, error: "No se pudo mover el material." };
   }
 }
 

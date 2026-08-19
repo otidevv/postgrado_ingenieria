@@ -283,7 +283,12 @@ export function SessionsTab({
               <SessionForm moduleId={moduleId} initial={s} onDone={done} />
             )}
             {isOpen && (
-              <AttendanceEditor moduleId={moduleId} session={s} roster={roster} />
+              <AttendanceEditor
+                key={JSON.stringify(s.attendance)}
+                moduleId={moduleId}
+                session={s}
+                roster={roster}
+              />
             )}
           </div>
         );

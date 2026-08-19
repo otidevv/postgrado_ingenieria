@@ -155,7 +155,7 @@ function GradeInput({
       type="number"
       min={0}
       max={20}
-      step={0.5}
+      step={0.01}
       value={value}
       disabled={pending}
       aria-invalid={bad}

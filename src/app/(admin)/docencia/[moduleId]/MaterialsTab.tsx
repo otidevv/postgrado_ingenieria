@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/admin/Icon";
-import { deleteMaterial, saveMaterial } from "./actions";
+import { deleteMaterial, moveMaterial, saveMaterial } from "./actions";
 import type { MaterialRow } from "../types";
 
 export function MaterialsTab({
@@ -45,6 +45,15 @@ export function MaterialsTab({
     });
   };
 
+  const move = (m: MaterialRow, dir: "up" | "down") => {
+    setError(null);
+    startTransition(async () => {
+      const res = await moveMaterial(moduleId, m.id, dir);
+      if (!res.ok) setError(res.error);
+      router.refresh();
+    });
+  };
+
   return (
     <div className="dw-card">
       <h2 style={{ fontSize: 15, fontWeight: 600, marginTop: 0 }}>
@@ -73,15 +82,33 @@ export function MaterialsTab({
         <p className="dtable__muted">Aún no hay materiales publicados.</p>
       ) : (
         <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-          {materials.map((m) => (
+          {materials.map((m, i) => (
             <li key={m.id} className="dw-row" style={{ justifyContent: "space-between", padding: "8px 0", borderTop: "1px solid var(--border, #e5e7eb)" }}>
               <a href={m.url} target="_blank" rel="noopener noreferrer" className="linkbtn">
                 <Icon name="external" size={15} />
                 {m.title}
               </a>
-              <button className="iconbtn" aria-label="Quitar material" disabled={pending} onClick={() => remove(m)}>
-                <Icon name="trash" size={16} />
-              </button>
+              <div className="dw-row">
+                <button
+                  className="iconbtn"
+                  aria-label="Subir material"
+                  disabled={pending || i === 0}
+                  onClick={() => move(m, "up")}
+                >
+                  <Icon name="chevron-up" size={16} />
+                </button>
+                <button
+                  className="iconbtn"
+                  aria-label="Bajar material"
+                  disabled={pending || i === materials.length - 1}
+                  onClick={() => move(m, "down")}
+                >
+                  <Icon name="chevron-down" size={16} />
+                </button>
+                <button className="iconbtn" aria-label="Quitar material" disabled={pending} onClick={() => remove(m)}>
+                  <Icon name="trash" size={16} />
+                </button>
+              </div>
             </li>
           ))}
         </ul>
