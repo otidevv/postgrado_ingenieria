@@ -1,0 +1,55 @@
+/* Editor de diplomado */
+.edsec {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.edsec__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.edsec__head h2 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+}
+.edsec__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px 16px;
+}
+.edsec__grid .field--full {
+  grid-column: 1 / -1;
+}
+.edsec__foot {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+.edsec__saved {
+  font-size: 12.5px;
+  color: var(--muted, #6b7280);
+}
+.edlist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.edlist__row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.edlist__row input {
+  flex: 1;
+}
+@media (max-width: 640px) {
+  .edsec { padding: 14px; }
+}
