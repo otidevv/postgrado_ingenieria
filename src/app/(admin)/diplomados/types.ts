@@ -12,10 +12,13 @@ export type DiplomaRow = {
   totalHours: number;
   credits: number;
   updatedAt: string;
+  applicationCount: number;
 };
 
 export type DiplomaPerms = {
   canWrite: boolean;
 };
 
-export type ActionResult = { ok: true } | { ok: false; error: string };
+export type ActionResult<T = void> =
+  | { ok: true; data?: T }
+  | { ok: false; error: string; fieldErrors?: Record<string, string> };

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/auth/server";
 import { DiplomasView } from "./DiplomasView";
 import type { DiplomaRow } from "./types";
+import "../usuarios/users.css";
 
 export const metadata = { title: "Diplomados · UNAMAD Admin" };
 export const dynamic = "force-dynamic";
@@ -11,7 +12,7 @@ export default async function Page() {
 
   const diplomas = await prisma.diploma.findMany({
     orderBy: [{ featured: "desc" }, { order: "asc" }, { title: "asc" }],
-    include: { _count: { select: { modules: true } } },
+    include: { _count: { select: { modules: true, applications: true } } },
   });
 
   const rows: DiplomaRow[] = diplomas.map((d) => ({
@@ -26,6 +27,7 @@ export default async function Page() {
     totalHours: d.totalHours,
     credits: d.credits,
     updatedAt: d.updatedAt.toISOString(),
+    applicationCount: d._count.applications,
   }));
 
   return (
