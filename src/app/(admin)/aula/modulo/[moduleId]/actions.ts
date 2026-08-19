@@ -81,45 +81,78 @@ export async function submitWork(
       fileName = f.name.slice(0, 200);
     }
 
-    const previous = await prisma.submission.findUnique({
-      where: {
-        assessmentId_enrollmentId: {
-          assessmentId,
-          enrollmentId: aula.enrollmentId,
-        },
-      },
-      select: { storedPath: true },
-    });
+    let previous: { storedPath: string | null } | null = null;
+    try {
+      previous = await prisma.$transaction(async (tx) => {
+        const prev = await tx.submission.findUnique({
+          where: {
+            assessmentId_enrollmentId: {
+              assessmentId,
+              enrollmentId: aula.enrollmentId,
+            },
+          },
+          select: { storedPath: true },
+        });
 
-    await prisma.submission.upsert({
-      where: {
-        assessmentId_enrollmentId: {
-          assessmentId,
-          enrollmentId: aula.enrollmentId,
-        },
-      },
-      update: {
-        fileName,
-        storedPath: stored?.storedPath ?? null,
-        mimeType,
-        sizeBytes: stored?.sizeBytes ?? null,
-        linkUrl: linkUrl || null,
-        comment: comment || null,
-        submittedAt: new Date(),
-      },
-      create: {
-        assessmentId,
-        enrollmentId: aula.enrollmentId,
-        fileName,
-        storedPath: stored?.storedPath ?? null,
-        mimeType,
-        sizeBytes: stored?.sizeBytes ?? null,
-        linkUrl: linkUrl || null,
-        comment: comment || null,
-      },
-    });
+        // Re-verifica el Grade dentro de la transacción, inmediatamente antes
+        // del upsert: si el docente calificó justo en esta ventana (entre el
+        // chequeo de arriba y ahora), bloquea el reemplazo igualmente.
+        const gradedNow = await tx.grade.findUnique({
+          where: {
+            assessmentId_enrollmentId: {
+              assessmentId,
+              enrollmentId: aula.enrollmentId,
+            },
+          },
+          select: { assessmentId: true },
+        });
+        if (gradedNow) {
+          throw new Error("Esta evaluación ya fue calificada; no se puede reemplazar la entrega.");
+        }
 
-    // Limpia el archivo anterior si fue reemplazado.
+        await tx.submission.upsert({
+          where: {
+            assessmentId_enrollmentId: {
+              assessmentId,
+              enrollmentId: aula.enrollmentId,
+            },
+          },
+          update: {
+            fileName,
+            storedPath: stored?.storedPath ?? null,
+            mimeType,
+            sizeBytes: stored?.sizeBytes ?? null,
+            linkUrl: linkUrl || null,
+            comment: comment || null,
+            submittedAt: new Date(),
+          },
+          create: {
+            assessmentId,
+            enrollmentId: aula.enrollmentId,
+            fileName,
+            storedPath: stored?.storedPath ?? null,
+            mimeType,
+            sizeBytes: stored?.sizeBytes ?? null,
+            linkUrl: linkUrl || null,
+            comment: comment || null,
+          },
+        });
+
+        return prev;
+      });
+    } catch (e) {
+      // La transacción falló (incluida la re-verificación de nota concurrente):
+      // limpia el archivo recién escrito para no dejar huérfanos en storage/entregas/.
+      if (stored) {
+        await deleteSubmissionFile(stored.storedPath);
+      }
+      if (e instanceof Error && e.message.startsWith("Esta evaluación ya fue calificada")) {
+        return { ok: false, error: e.message };
+      }
+      throw e;
+    }
+
+    // Limpia el archivo anterior si fue reemplazado (solo tras éxito de la transacción).
     if (previous?.storedPath && previous.storedPath !== stored?.storedPath) {
       await deleteSubmissionFile(previous.storedPath);
     }
