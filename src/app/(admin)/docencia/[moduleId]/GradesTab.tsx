@@ -115,11 +115,13 @@ function GradeInput({
   assessmentId,
   enrollmentId,
   cell,
+  onError,
 }: {
   moduleId: string;
   assessmentId: string;
   enrollmentId: string;
   cell: GradeCell | undefined;
+  onError: (msg: string | null) => void;
 }) {
   const router = useRouter();
   const [value, setValue] = useState(cell?.score?.toString() ?? "");
@@ -138,7 +140,12 @@ function GradeInput({
     if (score === prev) return;
     startTransition(async () => {
       const res = await saveGrade(moduleId, assessmentId, enrollmentId, score, cell?.feedback ?? "");
-      if (!res.ok) setBad(true);
+      if (!res.ok) {
+        setBad(true);
+        onError(res.error);
+      } else {
+        onError(null);
+      }
       router.refresh();
     });
   };
@@ -177,6 +184,7 @@ export function GradesTab({
   const [editing, setEditing] = useState<string | "new" | null>(null);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [gradeError, setGradeError] = useState<string | null>(null);
 
   const totalWeight = assessments.reduce((s, a) => s + a.weight, 0);
 
@@ -248,6 +256,7 @@ export function GradesTab({
       {assessments.length > 0 && (
         <div className="dw-card" style={{ overflowX: "auto" }}>
           <h2 style={{ fontSize: 15, fontWeight: 600, marginTop: 0 }}>Notas (0–20)</h2>
+          {gradeError && <p style={{ color: "#b91c1c", fontSize: 13 }}>{gradeError}</p>}
           <table className="dw-gradetable">
             <thead>
               <tr>
@@ -272,16 +281,21 @@ export function GradesTab({
                 return (
                   <tr key={r.enrollmentId}>
                     <td>{r.name}</td>
-                    {assessments.map((a) => (
-                      <td key={a.id}>
-                        <GradeInput
-                          moduleId={moduleId}
-                          assessmentId={a.id}
-                          enrollmentId={r.enrollmentId}
-                          cell={grades[`${r.enrollmentId}:${a.id}`]}
-                        />
-                      </td>
-                    ))}
+                    {assessments.map((a) => {
+                      const cellKey = `${r.enrollmentId}:${a.id}`;
+                      return (
+                        <td key={a.id}>
+                          <GradeInput
+                            key={`${cellKey}:${grades[cellKey]?.score ?? ""}`}
+                            moduleId={moduleId}
+                            assessmentId={a.id}
+                            enrollmentId={r.enrollmentId}
+                            cell={grades[cellKey]}
+                            onError={setGradeError}
+                          />
+                        </td>
+                      );
+                    })}
                     <td className="dw-avg">{avg === null ? "—" : avg.toFixed(2)}</td>
                   </tr>
                 );
