@@ -430,7 +430,12 @@ export async function deleteUser(userId: string): Promise<ActionResult> {
     // demote, then delete the only super, etc.). C1 corollary.
     const target = await prisma.user.findUnique({
       where: { id: userId },
-      include: { roles: { include: { role: true } } },
+      include: {
+        roles: { include: { role: true } },
+        studentProfile: {
+          include: { enrollments: { select: { id: true }, take: 1 } },
+        },
+      },
     });
     if (!target) return fail("Usuario no encontrado.");
     const targetIsSuper = target.roles.some(
@@ -440,6 +445,14 @@ export async function deleteUser(userId: string): Promise<ActionResult> {
     if (targetIsSuper && !meIsSuper) {
       return fail(
         "Solo un superadministrador puede eliminar a otro superadministrador.",
+      );
+    }
+
+    // I1: don't cascade-delete academic history. StudentProfile -> Enrollment
+    // would be wiped by the FK cascade otherwise.
+    if ((target.studentProfile?.enrollments.length ?? 0) > 0) {
+      return fail(
+        "No se puede eliminar: el usuario tiene matrículas registradas. Suspende su cuenta o retira sus matrículas.",
       );
     }
 
@@ -545,6 +558,25 @@ export async function bulkDelete(
           "Solo un superadministrador puede eliminar a otros superadministradores.",
         );
       }
+    }
+
+    // I1: exclude users with academic history (enrollments via studentProfile)
+    // from the batch instead of letting the cascade wipe them out.
+    const withEnrollments = await prisma.user.findMany({
+      where: {
+        id: { in: finalTargets },
+        studentProfile: { enrollments: { some: {} } },
+      },
+      select: { id: true },
+    });
+    if (withEnrollments.length > 0) {
+      const enrolledSet = new Set(withEnrollments.map((u) => u.id));
+      finalTargets = finalTargets.filter((id) => !enrolledSet.has(id));
+    }
+    if (finalTargets.length === 0) {
+      return fail(
+        `No se puede eliminar: ${withEnrollments.length} usuario(s) del lote tienen matrículas registradas. Suspende sus cuentas o retira sus matrículas.`,
+      );
     }
 
     let count = 0;

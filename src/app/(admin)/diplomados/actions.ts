@@ -106,7 +106,10 @@ export async function deleteDiploma(id: string): Promise<ActionResult> {
   }
   const target = await prisma.diploma.findUnique({
     where: { id },
-    select: { slug: true, _count: { select: { applications: true } } },
+    select: {
+      slug: true,
+      _count: { select: { applications: true, enrollments: true } },
+    },
   });
   if (!target) return { ok: false, error: "Diplomado no encontrado." };
   if (target._count.applications > 0) {
@@ -116,14 +119,21 @@ export async function deleteDiploma(id: string): Promise<ActionResult> {
         "Este diplomado tiene postulaciones registradas; ciérralo u ocúltalo en lugar de eliminarlo.",
     };
   }
+  if (target._count.enrollments > 0) {
+    return {
+      ok: false,
+      error:
+        "Este diplomado tiene matrículas registradas; ciérralo u ocúltalo en lugar de eliminarlo.",
+    };
+  }
   const deleted = await prisma.diploma.deleteMany({
-    where: { id, applications: { none: {} } },
+    where: { id, applications: { none: {} }, enrollments: { none: {} } },
   });
   if (deleted.count === 0) {
     return {
       ok: false,
       error:
-        "Este diplomado tiene postulaciones registradas; ciérralo u ocúltalo en lugar de eliminarlo.",
+        "Este diplomado tiene postulaciones o matrículas registradas; ciérralo u ocúltalo en lugar de eliminarlo.",
     };
   }
   revalidatePath("/diplomados");

@@ -13,6 +13,12 @@ type Props = {
   existing: { id: string; status: string } | null; // matrícula ya creada
 };
 
+const ENROLLMENT_STATUS_LABEL: Record<string, string> = {
+  active: "matrícula activa",
+  withdrawn: "matrícula retirada",
+  completed: "matrícula concluida",
+};
+
 export function EnrollPanel({ applicationId, status, canEnroll, existing }: Props) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +45,11 @@ export function EnrollPanel({ applicationId, status, canEnroll, existing }: Prop
       {existing || outcome ? (
         <>
           <p className="ps-empty-note">
-            {outcome ? "Matrícula creada correctamente." : "Este postulante ya está matriculado."}
+            {outcome
+              ? "Matrícula creada correctamente."
+              : `Este postulante ya está matriculado. (${
+                  existing ? (ENROLLMENT_STATUS_LABEL[existing.status] ?? existing.status) : ""
+                })`}
           </p>
           {outcome?.tempPassword && (
             <div className="banner">
@@ -67,9 +77,11 @@ export function EnrollPanel({ applicationId, status, canEnroll, existing }: Prop
             estudiante (si no existe) y su matrícula en el diplomado.
           </p>
           {error && (
-            <div className="login__error" role="alert" style={{ marginBottom: 10 }}>
-              <Icon name="info" size={16} />
-              <span>{error}</span>
+            <div className="banner" role="alert" style={{ borderColor: "#f5c2c7", marginBottom: 10 }}>
+              <span className="banner__icon" style={{ color: "#d93025" }}>
+                <Icon name="alert" size={18} />
+              </span>
+              <p>{error}</p>
             </div>
           )}
           {canEnroll && (

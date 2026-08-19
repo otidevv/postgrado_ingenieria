@@ -206,8 +206,12 @@ export async function createManualEnrollment(
       fieldErrors.docNumber = "Número de documento no válido.";
     }
     const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (!existingUser && password.length < 6) {
-      fieldErrors.password = "La contraseña debe tener al menos 6 caracteres.";
+    if (!existingUser) {
+      if (password.length < 6) {
+        fieldErrors.password = "La contraseña debe tener al menos 6 caracteres.";
+      } else if (password.length > 200) {
+        fieldErrors.password = "Contraseña demasiado larga.";
+      }
     }
     const diploma = await prisma.diploma.findUnique({
       where: { id: input.diplomaId },

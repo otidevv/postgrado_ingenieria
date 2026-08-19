@@ -24,7 +24,7 @@ export function ManualEnrollModal({ diplomas, onClose, onSubmit }: Props) {
   const [topError, setTopError] = useState<string | null>(null);
   const [done, setDone] = useState<EnrollOutcome | null>(null);
 
-  useEscClose(true, onClose, submitting);
+  useEscClose(true, onClose, submitting || done !== null);
 
   const valid =
     name.trim().length >= 2 &&
@@ -102,9 +102,11 @@ export function ManualEnrollModal({ diplomas, onClose, onSubmit }: Props) {
           <>
             <div className="modal__body">
               {topError && (
-                <div className="login__error" role="alert" style={{ marginBottom: 16 }}>
-                  <Icon name="info" size={16} />
-                  <span>{topError}</span>
+                <div className="banner" role="alert" style={{ borderColor: "#f5c2c7", marginBottom: 16 }}>
+                  <span className="banner__icon" style={{ color: "#d93025" }}>
+                    <Icon name="alert" size={18} />
+                  </span>
+                  <p>{topError}</p>
                 </div>
               )}
               <label className="field">

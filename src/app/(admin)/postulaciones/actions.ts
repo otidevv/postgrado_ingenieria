@@ -22,6 +22,20 @@ export async function setApplicationStatus(
     return { ok: false, error: "Estado inválido." };
   }
 
+  if (status !== "accepted") {
+    const current = await prisma.diplomaApplication.findUnique({
+      where: { id },
+      select: { enrollment: { select: { id: true } } },
+    });
+    if (current?.enrollment) {
+      return {
+        ok: false,
+        error:
+          "Esta postulación ya generó una matrícula; gestiona la matrícula en /matriculas antes de cambiar el estado.",
+      };
+    }
+  }
+
   const updated = await prisma.diplomaApplication
     .update({
       where: { id },
