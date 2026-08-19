@@ -116,7 +116,16 @@ export async function deleteDiploma(id: string): Promise<ActionResult> {
         "Este diplomado tiene postulaciones registradas; ciérralo u ocúltalo en lugar de eliminarlo.",
     };
   }
-  await prisma.diploma.delete({ where: { id } });
+  const deleted = await prisma.diploma.deleteMany({
+    where: { id, applications: { none: {} } },
+  });
+  if (deleted.count === 0) {
+    return {
+      ok: false,
+      error:
+        "Este diplomado tiene postulaciones registradas; ciérralo u ocúltalo en lugar de eliminarlo.",
+    };
+  }
   revalidatePath("/diplomados");
   revalidatePath("/");
   revalidatePath(`/diplomado/${target.slug}`);
