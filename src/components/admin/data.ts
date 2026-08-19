@@ -25,5 +25,6 @@ export const SIDEBAR_NAV: SidebarItem[] = [
   { id: "roles", label: "Roles", icon: "shield", href: "/roles" },
   { id: "incidentes", label: "Incidentes", icon: "alert", href: "/incidentes" },
   { id: "diplomados", label: "Diplomados", icon: "cloud", href: "/diplomados" },
+  { id: "docentes", label: "Docentes", icon: "user", href: "/docentes" },
   { id: "postulaciones", label: "Postulaciones", icon: "inbox", href: "/postulaciones" },
 ];
