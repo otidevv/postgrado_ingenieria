@@ -30,4 +30,5 @@ export const SIDEBAR_NAV: SidebarItem[] = [
   { id: "diplomados", label: "Diplomados", icon: "cloud", href: "/diplomados", perm: "diplomas.read" },
   { id: "docentes", label: "Docentes", icon: "user", href: "/docentes", perm: "users.read" },
   { id: "postulaciones", label: "Postulaciones", icon: "inbox", href: "/postulaciones", perm: "applications.read" },
+  { id: "matriculas", label: "Matrículas", icon: "folder", href: "/matriculas", perm: "enrollments.read" },
 ];
