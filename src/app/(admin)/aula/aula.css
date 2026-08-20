@@ -39,8 +39,33 @@
   padding: 8px 10px;
   border-bottom: 1px solid var(--border, #e5e7eb);
 }
-.au-badge-nota {
+.au-table thead th {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 12.5px;
+  background: var(--bg-soft);
+  white-space: nowrap;
+}
+.au-cardtitle {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+.au-nota {
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.au-nota--ok {
+  color: #188038;
+}
+.au-nota--low {
+  color: #d93025;
+}
+html[data-theme="dark"] .au-nota--ok {
+  color: #6ee7b7;
+}
+html[data-theme="dark"] .au-nota--low {
+  color: #fca5a5;
 }
 @media (max-width: 640px) {
   .au-card { padding: 12px; }

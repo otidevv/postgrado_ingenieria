@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@/components/admin/Icon";
 import type { RosterStudent } from "@/lib/teaching";
 import { weightedAverage } from "@/lib/teaching-client";
+import { fmtCalDate } from "@/lib/teaching-client";
 import { deleteAssessment, saveAssessment, saveGrade } from "./actions";
 import type { AssessmentKind, AssessmentRow, GradeCell } from "../types";
 
@@ -57,9 +58,7 @@ function AssessmentForm({
   };
 
   const err = (k: string) =>
-    fieldErrors[k] ? (
-      <span style={{ color: "#b91c1c", fontSize: 12 }}>{fieldErrors[k]}</span>
-    ) : null;
+    fieldErrors[k] ? <span className="form-error">{fieldErrors[k]}</span> : null;
 
   return (
     <div className="dw-grid" style={{ marginTop: 10 }}>
@@ -100,7 +99,7 @@ function AssessmentForm({
         <textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
       </label>
       <div className="dw-row" style={{ gridColumn: "1 / -1", justifyContent: "flex-end" }}>
-        {error && <span style={{ color: "#b91c1c", fontSize: 12.5 }}>{error}</span>}
+        {error && <span className="form-error">{error}</span>}
         <button className="btn btn--ghost" onClick={onDone} disabled={pending}>Cancelar</button>
         <button className="btn btn--primary" onClick={save} disabled={pending}>
           {pending ? "Guardando…" : initial ? "Guardar" : "Crear evaluación"}
@@ -159,7 +158,7 @@ function GradeInput({
       value={value}
       disabled={pending}
       aria-invalid={bad}
-      style={bad ? { borderColor: "#b91c1c" } : undefined}
+      title={cell?.feedback ?? undefined}
       onChange={(e) => setValue(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => {
@@ -207,9 +206,7 @@ export function GradesTab({
     <div>
       <div className="dw-card">
         <div className="dw-row" style={{ justifyContent: "space-between" }}>
-          <h2 style={{ fontSize: 15, fontWeight: 600, margin: 0 }}>
-            Evaluaciones ({assessments.length})
-          </h2>
+          <h2 className="dw-cardtitle">Evaluaciones ({assessments.length})</h2>
           {editing === null && (
             <button className="btn btn--primary" onClick={() => setEditing("new")}>
               <Icon name="plus" size={15} />
@@ -218,12 +215,12 @@ export function GradesTab({
           )}
         </div>
         {totalWeight !== 100 && assessments.length > 0 && (
-          <p style={{ color: "#b45309", fontSize: 13, marginTop: 8 }}>
+          <p className="dw-note">
             La suma de pesos es {totalWeight}% (se recomienda 100%). El promedio se
             calcula sobre lo calificado.
           </p>
         )}
-        {error && <p style={{ color: "#b91c1c", fontSize: 13 }}>{error}</p>}
+        {error && <p className="form-error">{error}</p>}
         {editing === "new" && (
           <AssessmentForm moduleId={moduleId} initial={null} onDone={done} />
         )}
@@ -236,7 +233,7 @@ export function GradesTab({
                 <div style={{ fontWeight: 500 }}>{a.title}</div>
                 <div className="dtable__muted" style={{ fontSize: 12 }}>
                   {KIND_LABEL[a.kind]} · {a.weight}%
-                  {a.dueDate ? ` · vence ${a.dueDate.slice(0, 10)}` : ""}
+                  {a.dueDate ? ` · vence ${fmtCalDate(a.dueDate)}` : ""}
                   {a.allowsSubmission ? " · acepta entrega" : ""}
                 </div>
               </div>
@@ -255,15 +252,15 @@ export function GradesTab({
 
       {assessments.length > 0 && (
         <div className="dw-card" style={{ overflowX: "auto" }}>
-          <h2 style={{ fontSize: 15, fontWeight: 600, marginTop: 0 }}>Notas (0–20)</h2>
-          {gradeError && <p style={{ color: "#b91c1c", fontSize: 13 }}>{gradeError}</p>}
+          <h2 className="dw-cardtitle">Notas (0–20)</h2>
+          {gradeError && <p className="form-error">{gradeError}</p>}
           <table className="dw-gradetable">
             <thead>
               <tr>
                 <th>Estudiante</th>
                 {assessments.map((a) => (
                   <th key={a.id} title={a.title}>
-                    {a.title.length > 14 ? `${a.title.slice(0, 14)}…` : a.title}
+                    <span className="dw-colname">{a.title}</span>
                     <div className="dtable__muted" style={{ fontWeight: 400, fontSize: 11 }}>{a.weight}%</div>
                   </th>
                 ))}

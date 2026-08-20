@@ -1895,3 +1895,9 @@ html[data-theme="dark"] .badge--red {
     gap: 8px;
   }
 }
+
+/* ── Mensajes de error de formulario (docencia/aula) ─────────────────────── */
+.form-error {
+  color: var(--sev-critical);
+  font-size: 12.5px;
+}

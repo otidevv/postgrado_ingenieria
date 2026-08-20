@@ -48,7 +48,7 @@ export function AulaHome({ rows }: { rows: AulaDiploma[] }) {
                       </td>
                       <td className="dtable__muted">{m.teacherLabel ?? "Por asignar"}</td>
                       <td className="dtable__settings">
-                        <Link className="btn btn--primary" href={`/aula/modulo/${m.id}`}>
+                        <Link className="btn btn--ghost" href={`/aula/modulo/${m.id}`}>
                           Entrar
                         </Link>
                       </td>

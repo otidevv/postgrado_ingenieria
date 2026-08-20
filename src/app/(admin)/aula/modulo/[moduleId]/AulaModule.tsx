@@ -3,7 +3,22 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/admin/Icon";
+import { fmtCalDate } from "@/lib/teaching-client";
 import { submitWork } from "./actions";
+
+// Nota mínima aprobatoria (posgrado). Colorea las notas del alumno.
+const APPROVAL_MIN = 14;
+
+function notaClass(score: number): string {
+  return `au-nota ${score >= APPROVAL_MIN ? "au-nota--ok" : "au-nota--low"}`;
+}
+
+const ATT_BADGE: Record<string, string> = {
+  presente: "badge--green",
+  tardanza: "badge--amber",
+  falta: "badge--red",
+  justificada: "badge--neutral",
+};
 
 export type AulaAssessment = {
   id: string;
@@ -53,9 +68,7 @@ const KIND_LABEL: Record<string, string> = {
   participacion: "Participación",
 };
 
-function calDate(iso: string): string {
-  return iso.slice(0, 10);
-}
+const calDate = fmtCalDate;
 
 function isPastDue(dueDate: string | null): boolean {
   if (!dueDate) return false;
@@ -111,7 +124,7 @@ function SubmitForm({
         <span className="field__label">Comentario (opcional)</span>
         <input value={comment} onChange={(e) => setComment(e.target.value)} maxLength={1000} />
       </label>
-      {error && <p style={{ color: "#b91c1c", fontSize: 13 }}>{error}</p>}
+      {error && <p className="form-error">{error}</p>}
       <button className="btn btn--primary" onClick={send} disabled={pending}>
         {pending ? "Enviando…" : assessment.submission ? "Reemplazar entrega" : "Enviar entrega"}
       </button>
@@ -147,7 +160,7 @@ export function AulaModule({ data, average }: { data: AulaData; average: number 
 
       {tab === "notas" && (
         <div className="au-card">
-          <h2 style={{ fontSize: 15, fontWeight: 600, marginTop: 0 }}>Mis notas</h2>
+          <h2 className="au-cardtitle">Mis notas</h2>
           {data.assessments.length === 0 ? (
             <p className="dtable__muted">El docente aún no define evaluaciones.</p>
           ) : (
@@ -170,7 +183,7 @@ export function AulaModule({ data, average }: { data: AulaData; average: number 
                       </div>
                     </td>
                     <td>{a.weight}%</td>
-                    <td className="au-badge-nota">
+                    <td className={a.score === null ? "au-nota" : notaClass(a.score)}>
                       {a.score === null ? "—" : a.score.toFixed(2)}
                     </td>
                     <td className="dtable__muted">{a.feedback ?? "—"}</td>
@@ -178,7 +191,7 @@ export function AulaModule({ data, average }: { data: AulaData; average: number 
                 ))}
                 <tr>
                   <td colSpan={2} style={{ fontWeight: 600 }}>Promedio ponderado</td>
-                  <td className="au-badge-nota" colSpan={2}>
+                  <td className={average === null ? "au-nota" : notaClass(average)} colSpan={2}>
                     {average === null ? "—" : average.toFixed(2)}
                   </td>
                 </tr>
@@ -190,7 +203,7 @@ export function AulaModule({ data, average }: { data: AulaData; average: number 
 
       {tab === "asistencia" && (
         <div className="au-card">
-          <h2 style={{ fontSize: 15, fontWeight: 600, marginTop: 0 }}>
+          <h2 className="au-cardtitle">
             Mi asistencia
             {recorded > 0 && (
               <span className="dtable__muted" style={{ fontWeight: 400, fontSize: 13 }}>
@@ -214,7 +227,15 @@ export function AulaModule({ data, average }: { data: AulaData; average: number 
                   <tr key={s.order}>
                     <td>Sesión {s.order} · {s.topic}</td>
                     <td className="dtable__muted">{calDate(s.date)}</td>
-                    <td>{s.status ? ATT_LABEL[s.status] : "Sin registrar"}</td>
+                    <td>
+                      {s.status ? (
+                        <span className={`badge ${ATT_BADGE[s.status] ?? "badge--neutral"}`}>
+                          {ATT_LABEL[s.status]}
+                        </span>
+                      ) : (
+                        <span className="dtable__muted">Sin registrar</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -225,7 +246,7 @@ export function AulaModule({ data, average }: { data: AulaData; average: number 
 
       {tab === "materiales" && (
         <div className="au-card">
-          <h2 style={{ fontSize: 15, fontWeight: 600, marginTop: 0 }}>Materiales</h2>
+          <h2 className="au-cardtitle">Materiales</h2>
           {data.materials.length === 0 ? (
             <p className="dtable__muted">El docente aún no publica materiales.</p>
           ) : (
@@ -264,14 +285,16 @@ export function AulaModule({ data, average }: { data: AulaData; average: number 
                       <div className="dtable__muted" style={{ fontSize: 12 }}>
                         {KIND_LABEL[a.kind] ?? a.kind} · {a.weight}%
                         {a.dueDate ? ` · vence ${calDate(a.dueDate)}` : ""}
-                        {pastDue ? " · VENCIDO" : ""}
                         {graded ? ` · calificado: ${a.score!.toFixed(2)}` : ""}
                       </div>
                       {a.description && (
                         <p style={{ fontSize: 13, marginTop: 6 }}>{a.description}</p>
                       )}
                     </div>
-                    <div>
+                    <div style={{ display: "flex", gap: 6, alignItems: "flex-start" }}>
+                      {pastDue && !a.submission && (
+                        <span className="badge badge--red">Vencido</span>
+                      )}
                       {a.submission ? (
                         <span className="badge badge--green">Entregado</span>
                       ) : (
@@ -282,7 +305,7 @@ export function AulaModule({ data, average }: { data: AulaData; average: number 
 
                   {a.submission && (
                     <p style={{ fontSize: 13, marginTop: 8 }}>
-                      Tu entrega ({a.submission.submittedAt.slice(0, 10)}):{" "}
+                      Tu entrega ({calDate(a.submission.submittedAt)}):{" "}
                       {a.submission.fileName ? (
                         <a className="linkbtn" href={`/api/entregas/${a.submission.id}`}>
                           <Icon name="download" size={14} />

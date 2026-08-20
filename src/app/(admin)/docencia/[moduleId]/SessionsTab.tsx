@@ -66,9 +66,7 @@ function SessionForm({
       <label className="field" style={{ margin: 0 }}>
         <span className="field__label">Fecha</span>
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-invalid={!!fieldErrors.date} />
-        {fieldErrors.date && (
-          <span style={{ color: "#b91c1c", fontSize: 12 }}>{fieldErrors.date}</span>
-        )}
+        {fieldErrors.date && <span className="form-error">{fieldErrors.date}</span>}
       </label>
       <label className="field" style={{ margin: 0, flex: 1, minWidth: 220 }}>
         <span className="field__label">Tema de la sesión</span>
@@ -78,9 +76,7 @@ function SessionForm({
           placeholder="p. ej. Introducción a redes"
           aria-invalid={!!fieldErrors.topic}
         />
-        {fieldErrors.topic && (
-          <span style={{ color: "#b91c1c", fontSize: 12 }}>{fieldErrors.topic}</span>
-        )}
+        {fieldErrors.topic && <span className="form-error">{fieldErrors.topic}</span>}
       </label>
       <button className="btn btn--primary" onClick={save} disabled={pending}>
         {pending ? "Guardando…" : initial ? "Guardar" : "Crear sesión"}
@@ -88,7 +84,7 @@ function SessionForm({
       <button className="btn btn--ghost" onClick={onDone} disabled={pending}>
         Cancelar
       </button>
-      {error && <span style={{ color: "#b91c1c", fontSize: 12.5 }}>{error}</span>}
+      {error && <span className="form-error">{error}</span>}
     </div>
   );
 }
@@ -137,8 +133,6 @@ function AttendanceEditor({
         <button className="btn btn--ghost" onClick={() => setAll("presente")}>
           Marcar todos presentes
         </button>
-        {msg && <span className="dtable__muted">{msg}</span>}
-        {error && <span style={{ color: "#b91c1c", fontSize: 12.5 }}>{error}</span>}
       </div>
       <table className="dw-attend">
         <thead>
@@ -156,6 +150,7 @@ function AttendanceEditor({
               </td>
               <td>
                 <select
+                  data-status={marks[r.enrollmentId] ?? ""}
                   value={marks[r.enrollmentId] ?? ""}
                   onChange={(e) => {
                     const v = e.target.value as AttendanceStatus | "";
@@ -179,6 +174,8 @@ function AttendanceEditor({
         </tbody>
       </table>
       <div className="dw-row" style={{ justifyContent: "flex-end", marginTop: 10 }}>
+        {msg && <span className="badge badge--green">{msg}</span>}
+        {error && <span className="form-error">{error}</span>}
         <button className="btn btn--primary" onClick={save} disabled={pending}>
           {pending ? "Guardando…" : "Guardar asistencia"}
         </button>
@@ -219,23 +216,21 @@ export function SessionsTab({
 
   return (
     <div>
-      <div className="dw-card">
-        <div className="dw-row" style={{ justifyContent: "space-between" }}>
-          <h2 style={{ fontSize: 15, fontWeight: 600, margin: 0 }}>
-            Sesiones ({sessions.length})
-          </h2>
-          {editing === null && (
-            <button className="btn btn--primary" onClick={() => setEditing("new")}>
-              <Icon name="plus" size={15} />
-              Nueva sesión
-            </button>
-          )}
-        </div>
-        {error && <p style={{ color: "#b91c1c", fontSize: 13 }}>{error}</p>}
-        {editing === "new" && (
-          <SessionForm moduleId={moduleId} initial={null} onDone={done} />
+      <div className="dw-toolbar">
+        <h2 className="dw-cardtitle">Sesiones ({sessions.length})</h2>
+        {editing === null && (
+          <button className="btn btn--primary" onClick={() => setEditing("new")}>
+            <Icon name="plus" size={15} />
+            Nueva sesión
+          </button>
         )}
       </div>
+      {error && <p className="form-error">{error}</p>}
+      {editing === "new" && (
+        <div className="dw-card">
+          <SessionForm moduleId={moduleId} initial={null} onDone={done} />
+        </div>
+      )}
 
       {sessions.length === 0 && editing === null && (
         <div className="dw-card">
