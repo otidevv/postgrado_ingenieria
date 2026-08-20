@@ -68,7 +68,7 @@ function ModuleForm({
 
   const err = (k: string) =>
     fieldErrors[k] ? (
-      <span style={{ color: "#b91c1c", fontSize: 12, marginTop: 4 }}>{fieldErrors[k]}</span>
+      <span className="form-error" style={{ marginTop: 4 }}>{fieldErrors[k]}</span>
     ) : null;
 
   return (
@@ -122,7 +122,7 @@ function ModuleForm({
         </div>
       </div>
       <div className="edsec__foot">
-        {error && <span style={{ color: "#b91c1c", fontSize: 12.5 }}>{error}</span>}
+        {error && <span className="form-error">{error}</span>}
         <button className="btn btn--ghost" onClick={onDone} disabled={pending}>Cancelar</button>
         <button className="btn btn--primary" onClick={save} disabled={pending}>
           {pending ? "Guardando…" : initial ? "Guardar módulo" : "Crear módulo"}
@@ -177,7 +177,7 @@ export function ModulesSection({
         )}
       </div>
 
-      {error && <p style={{ color: "#b91c1c", fontSize: 13 }}>{error}</p>}
+      {error && <p className="form-error" style={{ fontSize: 13 }}>{error}</p>}
 
       {modules.map((m, i) => (
         <div key={m.id} style={{ borderTop: i > 0 ? "1px solid var(--border, #e5e7eb)" : "none", padding: "10px 0" }}>

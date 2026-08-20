@@ -1097,6 +1097,11 @@ html[data-theme="dark"] .sidebar__subitem:hover {
 }
 .dtable__num {
   width: 100px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.dtable__nowrap {
+  white-space: nowrap;
 }
 .dtable__muted {
   color: var(--text-muted);
@@ -1900,4 +1905,36 @@ html[data-theme="dark"] .badge--red {
 .form-error {
   color: var(--sev-critical);
   font-size: 12.5px;
+}
+
+/* ── Controles de filtro y variantes (pase de diseño admin) ──────────────── */
+.selectctl {
+  height: 36px;
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  padding: 0 12px;
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.selectctl:focus {
+  outline: 0;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.banner--error {
+  border-color: color-mix(in srgb, var(--sev-critical) 40%, var(--border));
+}
+.banner--error .banner__icon {
+  color: var(--sev-critical);
+}
+.btn--ghost-danger {
+  background: transparent;
+  color: var(--sev-critical);
+}
+.btn--ghost-danger:hover {
+  background: color-mix(in srgb, var(--sev-critical) 10%, transparent);
 }

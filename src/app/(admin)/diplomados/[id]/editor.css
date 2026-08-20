@@ -53,3 +53,30 @@
 @media (max-width: 640px) {
   .edsec { padding: 14px; }
 }
+
+/* Inputs de las listas editables (fuera de .field, el preflight los desnuda) */
+.edlist__row input {
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--surface);
+  min-width: 0;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.edlist__row input:focus {
+  outline: 0;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.edlist__row input:disabled {
+  background: var(--bg-soft);
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+.edlist > .btn {
+  align-self: flex-start;
+  margin-top: 2px;
+}

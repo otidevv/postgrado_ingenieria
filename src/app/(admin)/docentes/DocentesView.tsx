@@ -42,8 +42,8 @@ export function DocentesView({ rows, perms }: { rows: TeacherRow[]; perms: Teach
       </div>
 
       {error && (
-        <div className="banner" role="alert" style={{ borderColor: "#f5c2c7" }}>
-          <span className="banner__icon" style={{ color: "#d93025" }}>
+        <div className="banner banner--error" role="alert">
+          <span className="banner__icon">
             <Icon name="alert" size={18} />
           </span>
           <p>{error}</p>
@@ -96,7 +96,7 @@ export function DocentesView({ rows, perms }: { rows: TeacherRow[]; perms: Teach
                               Editar
                             </button>
                             <button
-                              className="btn btn--ghost"
+                              className={`btn btn--ghost ${t.active ? "btn--ghost-danger" : ""}`}
                               disabled={isBusy}
                               onClick={() => toggleActive(t)}
                             >

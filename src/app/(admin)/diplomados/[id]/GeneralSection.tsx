@@ -46,7 +46,7 @@ export function GeneralSection({ diploma, canWrite }: { diploma: EditorDiploma; 
 
   const err = (k: string) =>
     fieldErrors[k] ? (
-      <span style={{ color: "#b91c1c", fontSize: 12, marginTop: 4 }}>{fieldErrors[k]}</span>
+      <span className="form-error" style={{ marginTop: 4 }}>{fieldErrors[k]}</span>
     ) : null;
 
   return (
@@ -113,7 +113,7 @@ export function GeneralSection({ diploma, canWrite }: { diploma: EditorDiploma; 
             disabled={!canWrite}
             style={{ width: "auto" }}
           />
-          <span className="field__label" style={{ margin: 0 }}>Destacado en la portada</span>
+          <span style={{ margin: 0, fontSize: 13.5, color: "var(--text)" }}>Destacado en la portada</span>
         </label>
         <label className="field field--full">
           <span className="field__label">Resumen (tarjetas)</span>
@@ -133,7 +133,7 @@ export function GeneralSection({ diploma, canWrite }: { diploma: EditorDiploma; 
       </div>
       {canWrite && (
         <div className="edsec__foot">
-          {error && <span style={{ color: "#b91c1c", fontSize: 12.5 }}>{error}</span>}
+          {error && <span className="form-error">{error}</span>}
           {saved && !error && <span className="edsec__saved">Guardado ✓</span>}
           <button className="btn btn--primary" onClick={save} disabled={pending}>
             {pending ? "Guardando…" : "Guardar datos generales"}

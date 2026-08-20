@@ -67,8 +67,8 @@ export function DiplomasView({
       </div>
 
       {error && (
-        <div className="banner" role="alert" style={{ borderColor: "#f5c2c7" }}>
-          <span className="banner__icon" style={{ color: "#d93025" }}>
+        <div className="banner banner--error" role="alert">
+          <span className="banner__icon">
             <Icon name="alert" size={18} />
           </span>
           <p>{error}</p>
@@ -154,7 +154,7 @@ export function DiplomasView({
                               </button>
                             ) : (
                               <button
-                                className="btn btn--primary"
+                                className="btn btn--ghost"
                                 disabled={isBusy}
                                 onClick={() => changeStatus(r.id, "published")}
                               >
@@ -163,7 +163,8 @@ export function DiplomasView({
                             ))}
                           {perms.canWrite && r.applicationCount === 0 && (
                             <button
-                              className="btn btn--ghost"
+                              className="iconbtn"
+                              aria-label="Eliminar diplomado"
                               disabled={isBusy}
                               onClick={() => {
                                 if (confirm(`¿Eliminar "${r.title}"? Esta acción no se puede deshacer.`)) {
@@ -246,7 +247,7 @@ function CreateDiplomaModal({
 
   const err = (k: string) =>
     fieldErrors[k] ? (
-      <span style={{ color: "#b91c1c", fontSize: 12, marginTop: 4 }}>{fieldErrors[k]}</span>
+      <span className="form-error" style={{ marginTop: 4 }}>{fieldErrors[k]}</span>
     ) : null;
 
   return (

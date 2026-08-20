@@ -54,7 +54,7 @@ export function ListsSection({ diploma, canWrite }: { diploma: EditorDiploma; ca
       ))}
       {canWrite && (
         <div className="edsec__foot">
-          {error && <span style={{ color: "#b91c1c", fontSize: 12.5 }}>{error}</span>}
+          {error && <span className="form-error">{error}</span>}
           {saved && !error && <span className="edsec__saved">Guardado ✓</span>}
           <button className="btn btn--primary" onClick={save} disabled={pending}>
             {pending ? "Guardando…" : "Guardar listas"}

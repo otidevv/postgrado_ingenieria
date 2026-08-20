@@ -4,14 +4,14 @@ import { useState, useTransition } from "react";
 import { updateDiplomaMetrics } from "./actions";
 import type { EditorDiploma, MetricsInput } from "./types";
 
-const FIELDS: Array<{ key: keyof MetricsInput; label: string }> = [
+const FIELDS: Array<{ key: keyof MetricsInput; label: string; money?: boolean }> = [
   { key: "totalHours", label: "Horas totales" },
   { key: "credits", label: "Créditos" },
   { key: "weeksPerModule", label: "Semanas por módulo" },
   { key: "minEnrollment", label: "Matrícula mínima (alumnos)" },
-  { key: "enrollmentFee", label: "Matrícula (S/)" },
-  { key: "moduleFee", label: "Costo por módulo (S/)" },
-  { key: "certificationFee", label: "Certificación (S/)" },
+  { key: "enrollmentFee", label: "Matrícula", money: true },
+  { key: "moduleFee", label: "Costo por módulo", money: true },
+  { key: "certificationFee", label: "Certificación", money: true },
 ];
 
 export function MetricsSection({ diploma, canWrite }: { diploma: EditorDiploma; canWrite: boolean }) {
@@ -52,26 +52,43 @@ export function MetricsSection({ diploma, canWrite }: { diploma: EditorDiploma; 
         {FIELDS.map((f) => (
           <label key={f.key} className="field">
             <span className="field__label">{f.label}</span>
-            <input
-              type="number"
-              min={0}
-              value={form[f.key]}
-              onChange={(e) => {
-                setForm((prev) => ({ ...prev, [f.key]: Number(e.target.value) }));
-                setSaved(false);
-              }}
-              disabled={!canWrite}
-              aria-invalid={!!fieldErrors[f.key]}
-            />
+            {f.money ? (
+              <div className="input-suffix">
+                <input
+                  type="number"
+                  min={0}
+                  value={form[f.key]}
+                  onChange={(e) => {
+                    setForm((prev) => ({ ...prev, [f.key]: Number(e.target.value) }));
+                    setSaved(false);
+                  }}
+                  disabled={!canWrite}
+                  aria-invalid={!!fieldErrors[f.key]}
+                />
+                <span>S/</span>
+              </div>
+            ) : (
+              <input
+                type="number"
+                min={0}
+                value={form[f.key]}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, [f.key]: Number(e.target.value) }));
+                  setSaved(false);
+                }}
+                disabled={!canWrite}
+                aria-invalid={!!fieldErrors[f.key]}
+              />
+            )}
             {fieldErrors[f.key] && (
-              <span style={{ color: "#b91c1c", fontSize: 12, marginTop: 4 }}>{fieldErrors[f.key]}</span>
+              <span className="form-error" style={{ marginTop: 4 }}>{fieldErrors[f.key]}</span>
             )}
           </label>
         ))}
       </div>
       {canWrite && (
         <div className="edsec__foot">
-          {error && <span style={{ color: "#b91c1c", fontSize: 12.5 }}>{error}</span>}
+          {error && <span className="form-error">{error}</span>}
           {saved && !error && <span className="edsec__saved">Guardado ✓</span>}
           <button className="btn btn--primary" onClick={save} disabled={pending}>
             {pending ? "Guardando…" : "Guardar costos y métricas"}

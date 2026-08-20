@@ -71,14 +71,14 @@ export function MatriculasView({
         )}
       </div>
 
-      <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-        <select value={fDiploma} onChange={(e) => setFDiploma(e.target.value)}>
+      <div className="filterbar" style={{ marginBottom: 14 }}>
+        <select className="selectctl" value={fDiploma} onChange={(e) => setFDiploma(e.target.value)}>
           <option value="">Todos los diplomados</option>
           {diplomas.map((d) => (
             <option key={d.id} value={d.id}>{d.title}</option>
           ))}
         </select>
-        <select value={fStatus} onChange={(e) => setFStatus(e.target.value)}>
+        <select className="selectctl" value={fStatus} onChange={(e) => setFStatus(e.target.value)}>
           <option value="">Todos los estados</option>
           <option value="active">Activa</option>
           <option value="withdrawn">Retirada</option>
@@ -87,8 +87,8 @@ export function MatriculasView({
       </div>
 
       {error && (
-        <div className="banner" role="alert" style={{ borderColor: "#f5c2c7" }}>
-          <span className="banner__icon" style={{ color: "#d93025" }}>
+        <div className="banner banner--error" role="alert">
+          <span className="banner__icon">
             <Icon name="alert" size={18} />
           </span>
           <p>{error}</p>
@@ -128,21 +128,21 @@ export function MatriculasView({
                         <div style={{ fontWeight: 500 }}>{r.studentName}</div>
                         <div className="dtable__muted" style={{ fontSize: 12 }}>{r.studentEmail}</div>
                       </td>
-                      <td className="dtable__muted">{r.docLabel}</td>
+                      <td className="dtable__muted dtable__nowrap">{r.docLabel}</td>
                       <td>{r.diplomaTitle}</td>
-                      <td className="dtable__muted">
+                      <td className="dtable__muted dtable__nowrap">
                         {r.origin === "postulacion" ? (r.applicationCode ?? "Postulación") : "Manual"}
                       </td>
                       <td>
                         <span className={`badge ${meta.badge}`}>{meta.label}</span>
                       </td>
-                      <td className="dtable__muted">{fmtDate(r.createdAt)}</td>
+                      <td className="dtable__muted dtable__nowrap">{fmtDate(r.createdAt)}</td>
                       <td className="dtable__settings">
                         {perms.canWrite && (
                           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
                             {r.status === "active" ? (
                               <>
-                                <button className="btn btn--ghost" disabled={isBusy} onClick={() => changeStatus(r.id, "withdrawn")}>
+                                <button className="btn btn--ghost btn--ghost-danger" disabled={isBusy} onClick={() => changeStatus(r.id, "withdrawn")}>
                                   {isBusy ? "…" : "Retirar"}
                                 </button>
                                 <button className="btn btn--ghost" disabled={isBusy} onClick={() => changeStatus(r.id, "completed")}>
