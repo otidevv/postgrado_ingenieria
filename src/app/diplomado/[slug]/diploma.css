@@ -6,7 +6,9 @@
 
 .dp {
   --dp-max: 1080px;
-  --dp-nav-h: 64px;
+  /* Alto del header compartido (lp-nav) ya condensado por el scroll:
+     píldora de 56px + 2×10px de aire. Offset de las pestañas pegajosas. */
+  --dp-nav-h: 76px;
   --dp-lav: #eef1fb; /* lavanda del hero (modo claro) */
   --dp-body: #33363b; /* párrafos: gris oscuro de alto contraste */
   font-family: "Google Sans Text", "Roboto", system-ui, sans-serif;
@@ -39,72 +41,6 @@ html[data-theme="dark"] .dp {
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
-}
-
-/* ─────────── Header ─────────── */
-.dp-nav {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
-  backdrop-filter: saturate(180%) blur(12px);
-  border-bottom: 1px solid var(--border);
-}
-.dp-nav__inner {
-  max-width: var(--dp-max);
-  margin: 0 auto;
-  height: var(--dp-nav-h);
-  padding: 0 24px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.dp-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--text);
-}
-.dp-brand__logo {
-  width: 42px;
-  height: 42px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-.dp-brand__text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-}
-.dp-brand__name {
-  font-family: "Google Sans", sans-serif;
-  font-weight: 600;
-  font-size: 15px;
-  letter-spacing: 0.02em;
-}
-.dp-brand__sub {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-.dp-nav__actions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.dp-nav__back {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--text-muted);
-  font-size: 13.5px;
-  font-weight: 500;
-}
-.dp-nav__back:hover {
-  color: var(--accent);
-}
-.dp-nav__back-ic {
-  transform: rotate(180deg);
 }
 
 /* ─────────── Botones base ─────────── */
@@ -997,7 +933,9 @@ html[data-theme="dark"] .dp {
   bottom: 12px;
   width: 240px;
   height: 340px;
-  z-index: 20;
+  /* Por encima de las pestañas pegajosas (z 30): la barra ya no dibuja su
+     línea sobre el robot. Igual que .lp-robot en la landing (z 40). */
+  z-index: 40;
   pointer-events: none; /* decorativo: nunca bloquea clics */
   filter: drop-shadow(0 12px 20px rgba(32, 33, 36, 0.18));
 }
@@ -1094,12 +1032,6 @@ html[data-theme="dark"] .dp {
 .dp-cta-btn:hover {
   transform: translateY(-1px);
 }
-.dp-nav__back-ic {
-  transition: transform 0.18s;
-}
-.dp-nav__back:hover .dp-nav__back-ic {
-  transform: rotate(180deg) translateX(2px);
-}
 .dp-tabs__apply svg {
   transition: transform 0.18s;
 }
@@ -1144,9 +1076,6 @@ html[data-theme="dark"] .dp {
   }
 }
 @media (max-width: 720px) {
-  .dp-nav__back {
-    display: none;
-  }
   .dp-learn {
     grid-template-columns: 1fr;
   }

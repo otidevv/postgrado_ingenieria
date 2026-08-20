@@ -47,13 +47,22 @@ html {
   color: var(--text-muted);
 }
 
-/* ─────────── Navegación (píldora flotante) ─────────── */
+/* ─────────── Navegación (píldora flotante) ───────────
+   Header compartido (SiteHeader): también se monta fuera de `.lp`
+   (diplomado, postulación), por eso define sus propias variables,
+   tipografía y reset de enlaces. */
 .lp-nav {
+  --lp-nav-h: 84px;
+  --lp-max: 1180px;
   position: sticky;
   top: 0;
   z-index: 40;
   padding: 10px 16px; /* aire alrededor: la barra "flota" */
   background: transparent;
+  font-family: "Google Sans Text", "Roboto", system-ui, sans-serif;
+}
+.lp-nav a {
+  text-decoration: none;
 }
 .lp-nav__inner {
   max-width: var(--lp-max);
@@ -1102,7 +1111,8 @@ html {
   width: 36px;
   height: 36px;
 }
-.lp-nav__link.is-active {
+.lp-nav__link.is-active,
+.lp-nav__mobile-link.is-active {
   color: var(--accent);
   background: var(--accent-soft);
 }

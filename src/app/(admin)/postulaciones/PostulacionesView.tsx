@@ -12,12 +12,64 @@ const STATUS_META = Object.fromEntries(
   APPLICATION_STATUS.map((s) => [s.value, s]),
 ) as Record<ApplicationStatus, (typeof APPLICATION_STATUS)[number]>;
 
+// Posición de cada estado en el flujo, para poder ordenar por estado.
+const STATUS_ORDER = Object.fromEntries(
+  APPLICATION_STATUS.map((s, i) => [s.value, i]),
+) as Record<ApplicationStatus, number>;
+
+const PAGE_SIZES = [10, 25, 50, 100];
+
+type SortKey =
+  | "code"
+  | "fullName"
+  | "diplomaTitle"
+  | "docCount"
+  | "status"
+  | "createdAt";
+type SortDir = "asc" | "desc";
+
 function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString("es-PE", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
+}
+
+function SortTh({
+  k,
+  sortKey,
+  sortDir,
+  onSort,
+  className,
+  children,
+}: {
+  k: SortKey;
+  sortKey: SortKey;
+  sortDir: SortDir;
+  onSort: (key: SortKey) => void;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <th
+      className={className}
+      aria-sort={
+        sortKey === k
+          ? sortDir === "asc"
+            ? "ascending"
+            : "descending"
+          : undefined
+      }
+    >
+      <button type="button" className="ps-sortbtn" onClick={() => onSort(k)}>
+        {children}
+        {sortKey === k && (
+          <Icon name={sortDir === "asc" ? "chevron-up" : "chevron-down"} size={13} />
+        )}
+      </button>
+    </th>
+  );
 }
 
 export function PostulacionesView({
@@ -32,6 +84,10 @@ export function PostulacionesView({
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | ApplicationStatus>("all");
   const [q, setQ] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("createdAt");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const changeStatus = (id: string, status: ApplicationStatus) => {
     setError(null);
@@ -53,10 +109,34 @@ export function PostulacionesView({
         r.docNumber.toLowerCase().includes(needle) ||
         r.code.toLowerCase().includes(needle) ||
         r.email.toLowerCase().includes(needle) ||
+        r.phone.toLowerCase().includes(needle) ||
         r.diplomaTitle.toLowerCase().includes(needle)
       );
     });
   }, [rows, filter, q]);
+
+  const sorted = useMemo(() => {
+    const dir = sortDir === "asc" ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      switch (sortKey) {
+        case "docCount":
+          return (a.docCount - b.docCount) * dir;
+        case "status":
+          return (STATUS_ORDER[a.status] - STATUS_ORDER[b.status]) * dir;
+        case "createdAt":
+          return a.createdAt.localeCompare(b.createdAt) * dir;
+        default:
+          return a[sortKey].localeCompare(b[sortKey], "es") * dir;
+      }
+    });
+  }, [filtered, sortKey, sortDir]);
+
+  // Paginación sobre el resultado filtrado+ordenado. `page` se fija a 1 al
+  // cambiar filtro/búsqueda/tamaño; el clamp cubre el caso de quedarse corto.
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+  const curPage = Math.min(page, totalPages);
+  const pageStart = (curPage - 1) * pageSize;
+  const paged = sorted.slice(pageStart, pageStart + pageSize);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: rows.length };
@@ -64,16 +144,79 @@ export function PostulacionesView({
     return c;
   }, [rows]);
 
+  const toggleSort = (key: SortKey) => {
+    if (key === sortKey) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      // Fecha y n° de documentos suelen consultarse de mayor a menor.
+      setSortDir(key === "createdAt" || key === "docCount" ? "desc" : "asc");
+    }
+    setPage(1);
+  };
+
+  const exportCsv = () => {
+    const header = [
+      "Código",
+      "Postulante",
+      "Tipo doc",
+      "N° documento",
+      "Email",
+      "Teléfono",
+      "Diplomado",
+      "Documentos",
+      "Estado",
+      "Recibida",
+    ];
+    const lines = sorted.map((r) => [
+      r.code,
+      r.fullName,
+      r.docType,
+      r.docNumber,
+      r.email,
+      r.phone,
+      r.diplomaTitle,
+      String(r.docCount),
+      STATUS_META[r.status].label,
+      fmtDate(r.createdAt),
+    ]);
+    const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    // BOM + separador ";" para que Excel (config. regional es-PE) lo abra bien.
+    const csv =
+      String.fromCharCode(0xfeff) +
+      [header, ...lines].map((l) => l.map(esc).join(";")).join("\r\n");
+    const url = URL.createObjectURL(
+      new Blob([csv], { type: "text/csv;charset=utf-8" }),
+    );
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `postulaciones-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const sortProps = { sortKey, sortDir, onSort: toggleSort };
+
   return (
     <div className="page">
       <div className="page__head">
         <div className="page__title">
           <h1>Postulaciones</h1>
           <span className="page__sub">
-            {rows.length} postulación{rows.length === 1 ? "" : "es"} ·{" "}
+            {rows.length} {rows.length === 1 ? "postulación" : "postulaciones"} ·{" "}
             {counts["pending"] ?? 0} pendiente{counts["pending"] === 1 ? "" : "s"}
           </span>
         </div>
+        <button
+          type="button"
+          className="btn btn--ghost"
+          onClick={exportCsv}
+          disabled={sorted.length === 0}
+          title="Exporta el listado filtrado a CSV"
+        >
+          <Icon name="download" size={16} />
+          Exportar CSV
+        </button>
       </div>
 
       {error && (
@@ -90,7 +233,10 @@ export function PostulacionesView({
         <div className="ps-adm-chips">
           <button
             className={`ps-chip${filter === "all" ? " is-active" : ""}`}
-            onClick={() => setFilter("all")}
+            onClick={() => {
+              setFilter("all");
+              setPage(1);
+            }}
           >
             Todas <span>{counts.all ?? 0}</span>
           </button>
@@ -98,7 +244,10 @@ export function PostulacionesView({
             <button
               key={s.value}
               className={`ps-chip${filter === s.value ? " is-active" : ""}`}
-              onClick={() => setFilter(s.value)}
+              onClick={() => {
+                setFilter(s.value);
+                setPage(1);
+              }}
             >
               {s.label} <span>{counts[s.value] ?? 0}</span>
             </button>
@@ -108,13 +257,16 @@ export function PostulacionesView({
           <Icon name="search" size={16} />
           <input
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setPage(1);
+            }}
             placeholder="Buscar por nombre, documento, código…"
           />
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {sorted.length === 0 ? (
         <div className="tablewrap">
           <div className="empty">
             <Icon name="inbox" size={40} />
@@ -132,17 +284,19 @@ export function PostulacionesView({
             <table className="dtable">
               <thead>
                 <tr>
-                  <th>Código</th>
-                  <th>Postulante</th>
-                  <th>Diplomado</th>
-                  <th className="dtable__num">Docs</th>
-                  <th>Estado</th>
-                  <th>Recibida</th>
+                  <SortTh k="code" {...sortProps}>Código</SortTh>
+                  <SortTh k="fullName" {...sortProps}>Postulante</SortTh>
+                  <SortTh k="diplomaTitle" {...sortProps}>Diplomado</SortTh>
+                  <SortTh k="docCount" className="dtable__num" {...sortProps}>
+                    Docs
+                  </SortTh>
+                  <SortTh k="status" {...sortProps}>Estado</SortTh>
+                  <SortTh k="createdAt" {...sortProps}>Recibida</SortTh>
                   <th className="dtable__settings">Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((r) => {
+                {paged.map((r) => {
                   const meta = STATUS_META[r.status];
                   const isBusy = pending && busyId === r.id;
                   return (
@@ -154,6 +308,7 @@ export function PostulacionesView({
                         <div style={{ fontWeight: 500 }}>{r.fullName}</div>
                         <div className="dtable__muted" style={{ fontSize: 12 }}>
                           {r.docType} {r.docNumber} · {r.email}
+                          {r.phone ? ` · ${r.phone}` : ""}
                         </div>
                       </td>
                       <td className="dtable__muted">{r.diplomaTitle}</td>
@@ -190,6 +345,56 @@ export function PostulacionesView({
                 })}
               </tbody>
             </table>
+          </div>
+
+          <div className="tablefoot">
+            <span>
+              {sorted.length === rows.length
+                ? `${rows.length} ${rows.length === 1 ? "postulación" : "postulaciones"}`
+                : `${sorted.length} de ${rows.length} postulaciones`}
+            </span>
+            <div className="ps-pager">
+              <label className="ps-pager__size">
+                Filas por página:
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setPage(1);
+                  }}
+                >
+                  {PAGE_SIZES.map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <span>
+                {pageStart + 1}–{Math.min(pageStart + pageSize, sorted.length)} de{" "}
+                {sorted.length}
+              </span>
+              <div className="ps-pager__nav">
+                <button
+                  type="button"
+                  className="ps-pager__btn"
+                  onClick={() => setPage(curPage - 1)}
+                  disabled={curPage <= 1}
+                  aria-label="Página anterior"
+                >
+                  <Icon name="chevron-right" size={16} className="ps-pager__left" />
+                </button>
+                <button
+                  type="button"
+                  className="ps-pager__btn"
+                  onClick={() => setPage(curPage + 1)}
+                  disabled={curPage >= totalPages}
+                  aria-label="Página siguiente"
+                >
+                  <Icon name="chevron-right" size={16} />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

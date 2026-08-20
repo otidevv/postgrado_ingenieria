@@ -7,6 +7,7 @@ import { getPublishedDiplomaBySlug } from "@/lib/diplomas";
 import { DiplomaTabs } from "./DiplomaTabs";
 import { ModuleAccordion } from "./ModuleAccordion";
 import { Robot3D } from "@/components/Robot3D";
+import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { SakuraPetals } from "@/components/SakuraPetals";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { RevealEffect } from "@/components/RevealEffect";
@@ -84,35 +85,8 @@ export default async function DiplomaPage({ params }: Params) {
       {/* Reveals al hacer scroll para los [data-reveal] de esta página */}
       <RevealEffect root=".dp" />
 
-      {/* Header */}
-      <header className="dp-nav">
-        <div className="dp-nav__inner">
-          <Link href="/" className="dp-brand">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logos/logo_unamad.png"
-              alt="Escudo de la Universidad Nacional Amazónica de Madre de Dios"
-              className="dp-brand__logo"
-              width={42}
-              height={42}
-            />
-            <span className="dp-brand__text">
-              <span className="dp-brand__name">UNAMAD</span>
-              <span className="dp-brand__sub">Escuela de Posgrado</span>
-            </span>
-          </Link>
-          <div className="dp-nav__actions">
-            <Link href="/#diplomados" className="dp-nav__back">
-              <Icon name="chevron-right" size={16} className="dp-nav__back-ic" />
-              Todos los diplomados
-            </Link>
-            <Link href="/login" className="dp-btn dp-btn--primary">
-              <Icon name="lock" size={16} />
-              Iniciar sesión
-            </Link>
-          </div>
-        </div>
-      </header>
+      {/* Header público compartido (el mismo de la landing) */}
+      <SiteHeader />
 
       {/* Hero */}
       <section className="dp-hero">

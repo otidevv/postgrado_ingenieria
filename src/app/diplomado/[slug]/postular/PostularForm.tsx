@@ -579,7 +579,7 @@ export function PostularForm({
         <ol className="ps-steps">
           {SECTIONS.map((s, i) => {
             const done = sectionDone[i];
-            const optional = "optional" in s && s.optional;
+            const optional = "optional" in s && s.optional === true;
             return (
               <li
                 key={s.id}

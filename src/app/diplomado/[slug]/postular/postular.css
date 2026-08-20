@@ -17,63 +17,23 @@ html[data-theme="dark"] .ps {
   --ps-ok: #81c995;
 }
 
-/* Nav */
-.ps-nav {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
-  backdrop-filter: saturate(1.1) blur(8px);
-  border-bottom: 1px solid var(--border);
-}
-.ps-nav__inner {
-  max-width: var(--ps-maxw);
-  margin-inline: auto;
-  padding: 12px 24px;
+/* Enlace de regreso al diplomado (dentro del hero; el header es el
+   compartido de la landing, ver SiteHeader). */
+.ps-back {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-.ps-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  color: inherit;
-}
-.ps-brand__logo {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-.ps-brand__text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.15;
-}
-.ps-brand__name {
-  font-weight: 800;
-  letter-spacing: 0.3px;
-}
-.ps-brand__sub {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-.ps-nav__back {
-  display: inline-flex;
+  width: fit-content;
   align-items: center;
   gap: 6px;
   font-size: 14px;
   font-weight: 600;
   color: var(--text-muted);
   text-decoration: none;
+  margin-bottom: 14px;
 }
-.ps-nav__back:hover {
+.ps-back:hover {
   color: var(--accent);
 }
-.ps-nav__back-ic {
+.ps-back__ic {
   transform: rotate(180deg);
 }
 

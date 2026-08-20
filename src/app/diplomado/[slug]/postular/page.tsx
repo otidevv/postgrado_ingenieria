@@ -5,6 +5,7 @@ import { Icon } from "@/components/admin/Icon";
 import { getPublishedDiplomaBySlug } from "@/lib/diplomas";
 import { PostularForm } from "./PostularForm";
 import { Robot3D } from "@/components/Robot3D";
+import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 
 export const dynamic = "force-dynamic";
@@ -28,31 +29,15 @@ export default async function PostularPage({ params }: Params) {
 
   return (
     <div className="ps">
-      <header className="ps-nav">
-        <div className="ps-nav__inner">
-          <Link href="/" className="ps-brand">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logos/logo_unamad.png"
-              alt="Escudo de la Universidad Nacional Amazónica de Madre de Dios"
-              className="ps-brand__logo"
-              width={40}
-              height={40}
-            />
-            <span className="ps-brand__text">
-              <span className="ps-brand__name">UNAMAD</span>
-              <span className="ps-brand__sub">Escuela de Posgrado</span>
-            </span>
-          </Link>
-          <Link href={`/diplomado/${slug}`} className="ps-nav__back">
-            <Icon name="chevron-right" size={16} className="ps-nav__back-ic" />
-            Volver al diplomado
-          </Link>
-        </div>
-      </header>
+      {/* Header público compartido (el mismo de la landing) */}
+      <SiteHeader />
 
       <div className="ps-hero">
         <div className="ps-hero__inner">
+          <Link href={`/diplomado/${slug}`} className="ps-back">
+            <Icon name="chevron-right" size={16} className="ps-back__ic" />
+            Volver al diplomado
+          </Link>
           <span className="ps-eyebrow">Proceso de admisión</span>
           <h1>Postular al Diplomado en {d.title}</h1>
           <p>
