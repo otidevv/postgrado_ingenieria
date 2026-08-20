@@ -22,6 +22,9 @@ type Params = { params: Promise<{ slug: string }> };
 
 const soles = (n: number) => `S/ ${n.toFixed(2)}`;
 
+/** Fecha de inicio de clases (Admisión 2026-II). */
+const START_DATE = "viernes 11 de setiembre";
+
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
   const d = await getPublishedDiplomaBySlug(slug);
@@ -74,7 +77,7 @@ export default async function DiplomaPage({ params }: Params) {
     { icon: "folder", v: `${moduleCount} módulos`, l: "Plan modular certificable" },
     { icon: "clock", v: `${d.credits} créditos`, l: `${d.totalHours} horas académicas` },
     { icon: "award", v: "Nivel posgrado", l: "Título o bachiller" },
-    { icon: "calendar", v: `${d.weeksPerModule} semanas`, l: "por cada módulo" },
+    { icon: "calendar", v: "11 de setiembre", l: `Inicio de clases · ${d.weeksPerModule} semanas por módulo` },
   ];
 
   return (
@@ -366,9 +369,9 @@ export default async function DiplomaPage({ params }: Params) {
               <span className="dp-fee__note">Pago único al inicio</span>
             </div>
             <div className="dp-fee" data-reveal>
-              <span className="dp-fee__label">Por módulo</span>
+              <span className="dp-fee__label">Mensualidad</span>
               <span className="dp-fee__value">{soles(d.moduleFee)}</span>
-              <span className="dp-fee__note">{moduleCount} módulos en total</span>
+              <span className="dp-fee__note">Por módulo · {moduleCount} módulos en total</span>
             </div>
             <div className="dp-fee" data-reveal>
               <span className="dp-fee__label">Certificación</span>
@@ -378,7 +381,7 @@ export default async function DiplomaPage({ params }: Params) {
           </div>
           <p className="dp-fees__foot" data-reveal>
             <Icon name="info" size={15} />
-            Vacantes limitadas · se requiere un mínimo de {d.minEnrollment}{" "}
+            Inicio de clases: {START_DATE} · Vacantes limitadas · se requiere un mínimo de {d.minEnrollment}{" "}
             matriculados para aperturar el programa.
           </p>
         </section>

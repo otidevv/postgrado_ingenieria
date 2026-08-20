@@ -185,7 +185,7 @@ export function LandingPage({ diplomas = [] }: { diplomas?: DiplomaCard[] }) {
                 <li>
                   <Icon name="check" size={18} />
                   <span>
-                    <b>Inicio de clases</b> octubre
+                    <b>Inicio de clases</b> viernes 11 de setiembre
                   </span>
                 </li>
               </ul>
