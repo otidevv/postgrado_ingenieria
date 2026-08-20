@@ -180,7 +180,11 @@ export function PostulacionesView({
       STATUS_META[r.status].label,
       fmtDate(r.createdAt),
     ]);
-    const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    // Neutraliza fórmulas (=, +, -, @, tab, CR) para evitar inyección CSV al abrir en Excel.
+    const esc = (v: string) => {
+      const safe = /^[=+\-@\t\r]/.test(v) ? `'${v}` : v;
+      return `"${safe.replace(/"/g, '""')}"`;
+    };
     // BOM + separador ";" para que Excel (config. regional es-PE) lo abra bien.
     const csv =
       String.fromCharCode(0xfeff) +
