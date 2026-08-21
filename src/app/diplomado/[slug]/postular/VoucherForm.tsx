@@ -8,7 +8,9 @@ import {
   MAX_FILE_BYTES,
   PAYMENT_SLOTS,
   fmtBytes,
+  formatPeDate,
   formatReceipt,
+  maskPeDate,
   type FieldErrors,
   type PaymentKind,
   type VoucherLookup,
@@ -251,12 +253,6 @@ function UploadFields({
   const [picked, setPicked] = useState<Partial<Record<PaymentKind, File>>>({});
   const [guideOpen, setGuideOpen] = useState(false);
   const fieldErrors: FieldErrors = state.status === "error" ? state.fieldErrors ?? {} : {};
-  const todayStr = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Lima",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
 
   return (
     <form
@@ -338,14 +334,7 @@ function UploadFields({
                     <>
                       {" "}
                       · pagado el{" "}
-                      <b>
-                        {new Date(has.paidAt).toLocaleDateString("es-PE", {
-                          timeZone: "America/Lima",
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                        })}
-                      </b>
+                      <b>{formatPeDate(has.paidAt)}</b>
                     </>
                   )}
                 </p>
@@ -372,10 +361,15 @@ function UploadFields({
                   <span className="ps-label">Fecha de pago</span>
                   <input
                     className={`ps-input ${fieldErrors[`${p.kind}_paidAt`] ? "is-invalid" : ""}`}
-                    type="date"
                     name={`${p.kind}_paidAt`}
-                    max={todayStr}
-                    defaultValue={has?.paidAt ? has.paidAt.slice(0, 10) : ""}
+                    inputMode="numeric"
+                    autoComplete="off"
+                    placeholder="dd/mm/aaaa"
+                    maxLength={10}
+                    defaultValue={has?.paidAt ? formatPeDate(has.paidAt) : ""}
+                    onChange={(e) => {
+                      e.target.value = maskPeDate(e.target.value);
+                    }}
                   />
                   {fieldErrors[`${p.kind}_paidAt`] && (
                     <span className="vf__err">

@@ -20,6 +20,7 @@ import {
   type VoucherMap,
   type VoucherSubmitState,
   normalizeReceipt,
+  parsePeDate,
 } from "@/lib/applications";
 
 const DOC_TYPE_VALUES = DOC_TYPES.map((d) => d.value) as string[];
@@ -256,12 +257,6 @@ async function voucherMapFor(applicationId: string): Promise<VoucherMap> {
   return map;
 }
 
-/** Interpreta la fecha del input (YYYY-MM-DD) como mediodía en Lima. */
-function parsePaidAt(v: string): Date | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
-  const d = new Date(`${v}T12:00:00-05:00`);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
 
 /** Busca la postulación por diplomado + documento y dice qué vouchers tiene. */
 export async function lookupVouchers(
@@ -334,9 +329,11 @@ export async function submitVouchers(
       ok = false;
     }
     const paidRaw = String(formData.get(`${slot.kind}_paidAt`) ?? "");
-    const paidAt = parsePaidAt(paidRaw);
+    const paidAt = parsePeDate(paidRaw);
     if (!paidAt) {
-      fieldErrors[`${slot.kind}_paidAt`] = "Ingresa la fecha de pago.";
+      fieldErrors[`${slot.kind}_paidAt`] = paidRaw.trim()
+        ? "Fecha no válida. Usa el formato dd/mm/aaaa."
+        : "Ingresa la fecha de pago.";
       ok = false;
     } else if (paidAt.getTime() > today.getTime() + 86_400_000) {
       fieldErrors[`${slot.kind}_paidAt`] = "La fecha de pago no puede ser futura.";

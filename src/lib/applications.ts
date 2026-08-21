@@ -121,6 +121,42 @@ export function normalizeReceipt(v: string): string | null {
   return m ? `${m[1]}-${m[2]}` : null;
 }
 
+/** Fecha en formato peruano dd/mm/aaaa → Date (mediodía en Lima) o null. */
+export function parsePeDate(v: string): Date | null {
+  const m = v.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  const [, dd, mm, yyyy] = m;
+  const d = new Date(`${yyyy}-${mm}-${dd}T12:00:00-05:00`);
+  if (Number.isNaN(d.getTime())) return null;
+  // Rechaza fechas imposibles (31/02) que Date normalizaría en silencio.
+  const check = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Lima",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+  return check === `${yyyy}-${mm}-${dd}` ? d : null;
+}
+
+/** Date/ISO → "dd/mm/aaaa" en hora de Lima. */
+export function formatPeDate(v: string | Date | null): string {
+  if (!v) return "";
+  const d = typeof v === "string" ? new Date(v) : v;
+  return new Intl.DateTimeFormat("es-PE", {
+    timeZone: "America/Lima",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(d);
+}
+
+/** Autoformato al teclear: "02062026" → "02/06/2026". */
+export function maskPeDate(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  const parts = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)].filter(Boolean);
+  return parts.join("/");
+}
+
 /** Presenta "002-00060299" como "002 - 00060299". */
 export function formatReceipt(v: string | null): string {
   if (!v) return "";

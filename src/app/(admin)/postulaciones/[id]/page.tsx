@@ -3,7 +3,13 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/auth/server";
 import { Icon } from "@/components/admin/Icon";
-import { APPLICATION_STATUS, GENDERS, fmtBytes, formatReceipt } from "@/lib/applications";
+import {
+  APPLICATION_STATUS,
+  GENDERS,
+  fmtBytes,
+  formatPeDate,
+  formatReceipt,
+} from "@/lib/applications";
 import { ReviewPanel } from "./ReviewPanel";
 import { EnrollPanel } from "./EnrollPanel";
 import "../postulaciones.css";
@@ -149,13 +155,7 @@ export default async function Page({ params }: Params) {
                         {doc.receiptNumber && (
                           <span className="ps-doclink__receipt">
                             Recibo {formatReceipt(doc.receiptNumber)}
-                            {doc.paidAt &&
-                              ` · pagado el ${doc.paidAt.toLocaleDateString("es-PE", {
-                                timeZone: "America/Lima",
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric",
-                              })}`}
+                            {doc.paidAt && ` · pagado el ${formatPeDate(doc.paidAt)}`}
                           </span>
                         )}
                         <span className="ps-doclink__meta">
