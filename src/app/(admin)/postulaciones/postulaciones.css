@@ -385,3 +385,10 @@
   color: var(--st-resolved-fg);
   border: 1px solid transparent;
 }
+.ps-doclink__receipt {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--st-resolved-fg);
+  font-variant-numeric: tabular-nums;
+}

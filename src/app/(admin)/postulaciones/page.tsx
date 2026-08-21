@@ -16,7 +16,7 @@ export default async function Page() {
       _count: { select: { documents: true } },
       documents: {
         where: { kind: { in: ["pago_matricula", "pago_mensualidad"] } },
-        select: { kind: true },
+        select: { kind: true, receiptNumber: true },
       },
     },
   });
@@ -34,6 +34,10 @@ export default async function Page() {
     docCount: a._count.documents,
     hasMatricula: a.documents.some((d) => d.kind === "pago_matricula"),
     hasMensualidad: a.documents.some((d) => d.kind === "pago_mensualidad"),
+    receiptMatricula:
+      a.documents.find((d) => d.kind === "pago_matricula")?.receiptNumber ?? null,
+    receiptMensualidad:
+      a.documents.find((d) => d.kind === "pago_mensualidad")?.receiptNumber ?? null,
     createdAt: a.createdAt.toISOString(),
   }));
 

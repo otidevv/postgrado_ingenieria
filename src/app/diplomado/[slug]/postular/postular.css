@@ -1182,3 +1182,94 @@ textarea.ps-input {
     display: none;
   }
 }
+
+/* Vouchers: guía y datos del recibo */
+.vf__guide {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--accent-softer);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.vf__guide-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.vf__guide-text svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--accent);
+}
+.vf__guide-text b {
+  color: var(--text);
+}
+.vf__guide .vf__link {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.vf__guide-fig {
+  margin: 0 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface);
+}
+.vf__guide-fig img {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  margin: 0 auto;
+}
+.vf__fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.vf__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.vf__field .ps-label {
+  font-size: 12px;
+}
+.vf__field .ps-input {
+  padding-block: 8px;
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+}
+.vf__field .vf__err {
+  margin-top: 2px;
+  font-size: 12px;
+}
+.vf__saved {
+  margin: -4px 0 10px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.vf__saved b {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 640px) {
+  .vf__guide {
+    flex-direction: column;
+  }
+  .vf__fields {
+    grid-template-columns: 1fr;
+  }
+}

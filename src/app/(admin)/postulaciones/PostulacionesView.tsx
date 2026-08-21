@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/admin/Icon";
-import { APPLICATION_STATUS } from "@/lib/applications";
+import { APPLICATION_STATUS, formatReceipt } from "@/lib/applications";
 import { setApplicationStatus } from "./actions";
 import type { ApplicationPerms, ApplicationRow, ApplicationStatus } from "./types";
 import "./postulaciones.css";
@@ -181,8 +181,8 @@ export function PostulacionesView({
       r.phone,
       r.diplomaTitle,
       String(r.docCount),
-      r.hasMatricula ? "Sí" : "No",
-      r.hasMensualidad ? "Sí" : "No",
+      r.hasMatricula ? formatReceipt(r.receiptMatricula) || "Sí" : "No",
+      r.hasMensualidad ? formatReceipt(r.receiptMensualidad) || "Sí" : "No",
       STATUS_META[r.status].label,
       fmtDate(r.createdAt),
     ]);
@@ -339,13 +339,21 @@ export function PostulacionesView({
                         <span className="ps-pay" aria-label={`Matrícula: ${r.hasMatricula ? "recibido" : "pendiente"}; mensualidad: ${r.hasMensualidad ? "recibido" : "pendiente"}`}>
                           <span
                             className={`ps-pay__dot${r.hasMatricula ? " is-ok" : ""}`}
-                            title={`Matrícula (494): ${r.hasMatricula ? "recibido" : "pendiente"}`}
+                            title={`Matrícula (494): ${
+                              r.hasMatricula
+                                ? `recibo ${formatReceipt(r.receiptMatricula)}`
+                                : "pendiente"
+                            }`}
                           >
                             M
                           </span>
                           <span
                             className={`ps-pay__dot${r.hasMensualidad ? " is-ok" : ""}`}
-                            title={`Mensualidad (610): ${r.hasMensualidad ? "recibido" : "pendiente"}`}
+                            title={`Mensualidad (610): ${
+                              r.hasMensualidad
+                                ? `recibo ${formatReceipt(r.receiptMensualidad)}`
+                                : "pendiente"
+                            }`}
                           >
                             C
                           </span>

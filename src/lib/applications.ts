@@ -89,6 +89,13 @@ export const PAYMENT_SLOTS = [
 export type PaymentKind = (typeof PAYMENT_SLOTS)[number]["kind"];
 export const PAYMENT_KINDS = PAYMENT_SLOTS.map((p) => p.kind) as PaymentKind[];
 
+/** Datos del voucher ya recibido (null = aún no se ha subido). */
+export type VoucherInfo = {
+  receiptNumber: string | null; // "002-00060299"
+  paidAt: string | null; // ISO (solo fecha relevante)
+};
+export type VoucherMap = Record<PaymentKind, VoucherInfo | null>;
+
 /** Estado de vouchers de una postulación (consulta pública por documento). */
 export type VoucherLookup =
   | { found: false }
@@ -97,13 +104,29 @@ export type VoucherLookup =
       code: string;
       firstName: string;
       diplomaTitle: string;
-      uploaded: Record<PaymentKind, boolean>;
+      uploaded: VoucherMap;
     };
 
 export type VoucherSubmitState =
   | { status: "idle" }
   | { status: "error"; message: string; fieldErrors?: FieldErrors }
-  | { status: "success"; code: string; uploaded: Record<PaymentKind, boolean> };
+  | { status: "success"; code: string; uploaded: VoucherMap };
+
+/** Número de recibo de caja UNAMAD: serie de 3 dígitos + número de 8 (002 - 00060299). */
+export const RECEIPT_RE = /^(\d{3})\s*-\s*(\d{8})$/;
+
+/** Normaliza "002 - 00060299" → "002-00060299"; null si no cumple el formato. */
+export function normalizeReceipt(v: string): string | null {
+  const m = v.trim().match(RECEIPT_RE);
+  return m ? `${m[1]}-${m[2]}` : null;
+}
+
+/** Presenta "002-00060299" como "002 - 00060299". */
+export function formatReceipt(v: string | null): string {
+  if (!v) return "";
+  const m = v.match(/^(\d{3})-(\d{8})$/);
+  return m ? `${m[1]} - ${m[2]}` : v;
+}
 
 export const INITIAL_VOUCHER_STATE: VoucherSubmitState = { status: "idle" };
 

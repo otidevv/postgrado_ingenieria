@@ -17,7 +17,9 @@ import {
   type PaymentKind,
   type SubmitState,
   type VoucherLookup,
+  type VoucherMap,
   type VoucherSubmitState,
+  normalizeReceipt,
 } from "@/lib/applications";
 
 const DOC_TYPE_VALUES = DOC_TYPES.map((d) => d.value) as string[];
@@ -234,8 +236,31 @@ export async function submitApplication(
    kind "pago_matricula" / "pago_mensualidad"; volver a subir reemplaza.
    ════════════════════════════════════════════════════════════════ */
 
-function emptyUploaded(): Record<PaymentKind, boolean> {
-  return { pago_matricula: false, pago_mensualidad: false };
+function emptyUploaded(): VoucherMap {
+  return { pago_matricula: null, pago_mensualidad: null };
+}
+
+/** Carga los vouchers de una postulación como mapa por tipo. */
+async function voucherMapFor(applicationId: string): Promise<VoucherMap> {
+  const docs = await prisma.applicationDocument.findMany({
+    where: { applicationId, kind: { in: PAYMENT_SLOTS.map((p) => p.kind) } },
+    select: { kind: true, receiptNumber: true, paidAt: true },
+  });
+  const map = emptyUploaded();
+  for (const d of docs) {
+    map[d.kind as PaymentKind] = {
+      receiptNumber: d.receiptNumber,
+      paidAt: d.paidAt ? d.paidAt.toISOString() : null,
+    };
+  }
+  return map;
+}
+
+/** Interpreta la fecha del input (YYYY-MM-DD) como mediodía en Lima. */
+function parsePaidAt(v: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
+  const d = new Date(`${v}T12:00:00-05:00`);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 /** Busca la postulación por diplomado + documento y dice qué vouchers tiene. */
@@ -249,26 +274,21 @@ export async function lookupVouchers(
   const app = await prisma.diplomaApplication.findFirst({
     where: { docNumber: doc, diploma: { slug } },
     select: {
+      id: true,
       code: true,
       firstName: true,
       diploma: { select: { title: true } },
-      documents: {
-        where: { kind: { in: PAYMENT_SLOTS.map((p) => p.kind) } },
-        select: { kind: true },
-      },
     },
   });
   if (!app) return { found: false };
 
-  const uploaded = emptyUploaded();
-  for (const d of app.documents) uploaded[d.kind as PaymentKind] = true;
   return {
     found: true,
     code: app.code,
     // Solo el primer nombre: es una consulta pública sin autenticación.
     firstName: app.firstName.split(/\s+/)[0] ?? "",
     diplomaTitle: app.diploma.title,
-    uploaded,
+    uploaded: await voucherMapFor(app.id),
   };
 }
 
@@ -284,20 +304,52 @@ export async function submitVouchers(
     fieldErrors.docNumber = "Ingresa tu número de documento.";
   }
 
-  const files: { kind: PaymentKind; label: string; file: File }[] = [];
+  const files: {
+    kind: PaymentKind;
+    label: string;
+    file: File;
+    receiptNumber: string;
+    paidAt: Date;
+  }[] = [];
+  const today = new Date();
   for (const slot of PAYMENT_SLOTS) {
     const f = formData.get(slot.kind);
     const file = f instanceof File && f.size > 0 ? f : null;
     if (!file) continue;
+    let ok = true;
     if (!ACCEPTED_MIME.includes(file.type as (typeof ACCEPTED_MIME)[number])) {
       fieldErrors[slot.kind] = "Formato no permitido (usa PDF, JPG, PNG o WEBP).";
-      continue;
-    }
-    if (file.size > MAX_FILE_BYTES) {
+      ok = false;
+    } else if (file.size > MAX_FILE_BYTES) {
       fieldErrors[slot.kind] = `El archivo supera el máximo de ${fmtBytes(MAX_FILE_BYTES)}.`;
-      continue;
+      ok = false;
     }
-    files.push({ kind: slot.kind, label: `${slot.label} (código ${slot.code})`, file });
+    // Número de recibo y fecha de pago: obligatorios junto con el archivo.
+    const receiptRaw = String(formData.get(`${slot.kind}_receipt`) ?? "");
+    const receiptNumber = normalizeReceipt(receiptRaw);
+    if (!receiptNumber) {
+      fieldErrors[`${slot.kind}_receipt`] = receiptRaw.trim()
+        ? "Usa el formato 002 - 00060299 (3 dígitos, guion, 8 dígitos)."
+        : "Ingresa el número de recibo.";
+      ok = false;
+    }
+    const paidRaw = String(formData.get(`${slot.kind}_paidAt`) ?? "");
+    const paidAt = parsePaidAt(paidRaw);
+    if (!paidAt) {
+      fieldErrors[`${slot.kind}_paidAt`] = "Ingresa la fecha de pago.";
+      ok = false;
+    } else if (paidAt.getTime() > today.getTime() + 86_400_000) {
+      fieldErrors[`${slot.kind}_paidAt`] = "La fecha de pago no puede ser futura.";
+      ok = false;
+    }
+    if (!ok || !receiptNumber || !paidAt) continue;
+    files.push({
+      kind: slot.kind,
+      label: `${slot.label} (código ${slot.code})`,
+      file,
+      receiptNumber,
+      paidAt,
+    });
   }
   if (files.length === 0 && Object.keys(fieldErrors).length === 0) {
     fieldErrors.files = "Adjunta al menos un voucher.";
@@ -344,6 +396,8 @@ export async function submitVouchers(
             storedPath,
             mimeType: item.file.type,
             sizeBytes,
+            receiptNumber: item.receiptNumber,
+            paidAt: item.paidAt,
           },
         }),
       ]);
@@ -356,12 +410,7 @@ export async function submitVouchers(
     };
   }
 
-  const docs = await prisma.applicationDocument.findMany({
-    where: { applicationId: app.id, kind: { in: PAYMENT_SLOTS.map((p) => p.kind) } },
-    select: { kind: true },
-  });
-  const uploaded = emptyUploaded();
-  for (const d of docs) uploaded[d.kind as PaymentKind] = true;
+  const uploaded = await voucherMapFor(app.id);
 
   revalidatePath("/postulaciones");
   revalidatePath(`/postulaciones/${app.id}`);

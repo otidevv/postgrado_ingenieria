@@ -16,6 +16,9 @@ export type ApplicationRow = {
   /** Vouchers de pago recibidos */
   hasMatricula: boolean;
   hasMensualidad: boolean;
+  /** Números de recibo (normalizados) si existen */
+  receiptMatricula: string | null;
+  receiptMensualidad: string | null;
   createdAt: string;
 };
 

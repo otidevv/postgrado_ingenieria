@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState, useTransition } from "react";
+import { startTransition, useActionState, useEffect, useState, useTransition } from "react";
 import { Icon } from "@/components/admin/Icon";
 import {
   ACCEPT_ATTR,
@@ -8,9 +8,11 @@ import {
   MAX_FILE_BYTES,
   PAYMENT_SLOTS,
   fmtBytes,
+  formatReceipt,
   type FieldErrors,
   type PaymentKind,
   type VoucherLookup,
+  type VoucherMap,
   type VoucherSubmitState,
 } from "@/lib/applications";
 import { lookupVouchers, submitVouchers } from "./actions";
@@ -177,7 +179,7 @@ function UploadForm({
 }: {
   slug: string;
   docNumber: string;
-  initialUploaded: Record<PaymentKind, boolean>;
+  initialUploaded: VoucherMap;
   onDone?: () => void;
 }) {
   const [state, formAction, pending] = useActionState(
@@ -239,7 +241,7 @@ function UploadFields({
 }: {
   slug: string;
   docNumber: string;
-  uploaded: Record<PaymentKind, boolean>;
+  uploaded: VoucherMap;
   state: VoucherSubmitState;
   formAction: (formData: FormData) => void;
   pending: boolean;
@@ -247,12 +249,60 @@ function UploadFields({
   onDone?: () => void;
 }) {
   const [picked, setPicked] = useState<Partial<Record<PaymentKind, File>>>({});
+  const [guideOpen, setGuideOpen] = useState(false);
   const fieldErrors: FieldErrors = state.status === "error" ? state.fieldErrors ?? {} : {};
+  const todayStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Lima",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
 
   return (
-    <form action={formAction} className="vf__form" noValidate>
+    <form
+      className="vf__form"
+      noValidate
+      // Envío manual: con `action=` React reinicia el formulario tras cada
+      // respuesta y el usuario perdería archivo, recibo y fecha al corregir.
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        startTransition(() => formAction(fd));
+      }}
+    >
       <input type="hidden" name="slug" value={slug} />
       <input type="hidden" name="docNumber" value={docNumber} />
+
+      {/* Guía: dónde están el número de recibo y la fecha en el voucher */}
+      <div className="vf__guide">
+        <p className="vf__guide-text">
+          <Icon name="info" size={15} />
+          <span>
+            Por cada voucher indica el <b>número de recibo</b> (ej. 002 - 00060299)
+            y la <b>fecha de pago</b> tal como figuran en el comprobante de caja.
+          </span>
+        </p>
+        <button
+          type="button"
+          className="vf__link"
+          aria-expanded={guideOpen}
+          onClick={() => setGuideOpen((v) => !v)}
+        >
+          {guideOpen ? "Ocultar ejemplo" : "Ver ejemplo"}
+        </button>
+      </div>
+      {guideOpen && (
+        <figure className="vf__guide-fig">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/vaucher/vaucher_pago.png"
+            alt="Ejemplo de recibo de pago de caja UNAMAD con el número de recibo y la fecha de pago resaltados"
+            width={1024}
+            height={1536}
+            loading="lazy"
+          />
+        </figure>
+      )}
 
       <div className="ps-docs vf__docs">
         {PAYMENT_SLOTS.map((p) => {
@@ -281,6 +331,59 @@ function UploadFields({
               <p className="ps-doc__hint">
                 {p.hint} Máx. {fmtBytes(MAX_FILE_BYTES)}.
               </p>
+              {has && !file && (
+                <p className="vf__saved">
+                  Recibo <b>{formatReceipt(has.receiptNumber)}</b>
+                  {has.paidAt && (
+                    <>
+                      {" "}
+                      · pagado el{" "}
+                      <b>
+                        {new Date(has.paidAt).toLocaleDateString("es-PE", {
+                          timeZone: "America/Lima",
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        })}
+                      </b>
+                    </>
+                  )}
+                </p>
+              )}
+              <div className="vf__fields">
+                <label className="vf__field">
+                  <span className="ps-label">Número de recibo</span>
+                  <input
+                    className={`ps-input ${fieldErrors[`${p.kind}_receipt`] ? "is-invalid" : ""}`}
+                    name={`${p.kind}_receipt`}
+                    inputMode="numeric"
+                    autoComplete="off"
+                    placeholder="002 - 00060299"
+                    maxLength={16}
+                    defaultValue={has ? formatReceipt(has.receiptNumber) : ""}
+                  />
+                  {fieldErrors[`${p.kind}_receipt`] && (
+                    <span className="vf__err">
+                      <Icon name="alert" size={13} /> {fieldErrors[`${p.kind}_receipt`]}
+                    </span>
+                  )}
+                </label>
+                <label className="vf__field">
+                  <span className="ps-label">Fecha de pago</span>
+                  <input
+                    className={`ps-input ${fieldErrors[`${p.kind}_paidAt`] ? "is-invalid" : ""}`}
+                    type="date"
+                    name={`${p.kind}_paidAt`}
+                    max={todayStr}
+                    defaultValue={has?.paidAt ? has.paidAt.slice(0, 10) : ""}
+                  />
+                  {fieldErrors[`${p.kind}_paidAt`] && (
+                    <span className="vf__err">
+                      <Icon name="alert" size={13} /> {fieldErrors[`${p.kind}_paidAt`]}
+                    </span>
+                  )}
+                </label>
+              </div>
               <label className="ps-doc__drop">
                 <Icon name="download" size={16} />
                 {file ? "Cambiar archivo" : has ? "Reemplazar" : "Elegir archivo"}

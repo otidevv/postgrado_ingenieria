@@ -529,6 +529,9 @@ model ApplicationDocument {
   storedPath    String // ruta relativa privada en disco
   mimeType      String
   sizeBytes     Int
+  // Solo para vouchers de pago (kind pago_*): datos del recibo de caja
+  receiptNumber String?   // "002-00060299" (serie-número, normalizado)
+  paidAt        DateTime? // fecha de pago indicada en el recibo
   createdAt     DateTime @default(now())
 
   application DiplomaApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
