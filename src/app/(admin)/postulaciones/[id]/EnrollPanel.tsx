@@ -65,6 +65,16 @@ export function EnrollPanel({ applicationId, status, canEnroll, existing }: Prop
               </p>
             </div>
           )}
+          {outcome && (
+            <p className={`ps-mailnote ${outcome.emailSent ? "is-ok" : "is-warn"}`}>
+              <Icon name={outcome.emailSent ? "check" : "alert"} size={15} />
+              {outcome.emailSent
+                ? `Credenciales enviadas a ${outcome.studentEmail}.`
+                : `No se pudo enviar el correo a ${outcome.studentEmail}: ${
+                    outcome.emailError ?? "error desconocido"
+                  }. Comparte las credenciales manualmente.`}
+            </p>
+          )}
           <Link href="/matriculas" className="linkbtn">
             <Icon name="external" size={15} />
             Ver matrículas

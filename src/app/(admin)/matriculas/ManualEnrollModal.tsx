@@ -92,6 +92,16 @@ export function ManualEnrollModal({ diplomas, onClose, onSubmit }: Props) {
                 El correo ya tenía cuenta; su contraseña no cambió.
               </p>
             )}
+            <p className={`ps-mailnote ${done.emailSent ? "is-ok" : "is-warn"}`}>
+              <Icon name={done.emailSent ? "check" : "alert"} size={15} />
+              {done.emailSent
+                ? `Correo enviado a ${done.studentEmail} con ${
+                    done.tempPassword ? "sus credenciales" : "la confirmación de matrícula"
+                  }.`
+                : `No se pudo enviar el correo a ${done.studentEmail}: ${
+                    done.emailError ?? "error desconocido"
+                  }. Comparte las credenciales manualmente.`}
+            </p>
             <footer className="modal__foot">
               <button type="button" className="btn btn--primary" onClick={onClose}>
                 Entendido

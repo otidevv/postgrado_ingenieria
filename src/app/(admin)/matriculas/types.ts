@@ -32,6 +32,9 @@ export type EnrollOutcome = {
   enrollmentId: string;
   studentEmail: string;
   tempPassword: string | null;
+  /** Resultado del correo con credenciales / confirmación. */
+  emailSent: boolean;
+  emailError: string | null;
 };
 
 export type EnrollPerms = { canWrite: boolean };

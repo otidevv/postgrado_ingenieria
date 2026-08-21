@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth/password";
+import { sendEnrollmentEmail } from "@/lib/mail";
 import { getCurrentUser, type CurrentUser } from "@/lib/auth/server";
 import type { PermissionKey } from "@/lib/auth/permissions";
 import type {
@@ -129,12 +130,29 @@ async function enrollCore(t: EnrollTarget): Promise<ActionResult<EnrollOutcome>>
     });
 
     refresh();
+
+    // Correo al estudiante: credenciales si la cuenta es nueva, o solo la
+    // confirmación si ya tenía cuenta. Un fallo de correo no deshace la
+    // matrícula: se informa al admin para que comparta la clave a mano.
+    const diploma = await prisma.diploma.findUnique({
+      where: { id: t.diplomaId },
+      select: { title: true },
+    });
+    const mail = await sendEnrollmentEmail({
+      to: t.email,
+      name: t.name,
+      diplomaTitle: diploma?.title ?? "",
+      password: isNewUser ? t.passwordForNewUser : null,
+    });
+
     return {
       ok: true,
       data: {
         enrollmentId: enrollment.id,
         studentEmail: t.email,
         tempPassword: isNewUser ? t.passwordForNewUser : null,
+        emailSent: mail.sent,
+        emailError: mail.sent ? null : mail.reason,
       },
     };
   } catch (e) {

@@ -1938,3 +1938,27 @@ html[data-theme="dark"] .badge--red {
 .btn--ghost-danger:hover {
   background: color-mix(in srgb, var(--sev-critical) 10%, transparent);
 }
+
+/* Aviso de envío de correo tras matricular */
+.ps-mailnote {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 10px 0 14px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ps-mailnote svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.ps-mailnote.is-ok {
+  background: var(--st-resolved-bg);
+  color: var(--st-resolved-fg);
+}
+.ps-mailnote.is-warn {
+  background: var(--st-triaged-bg);
+  color: var(--st-triaged-fg);
+}
