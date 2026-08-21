@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { lookupUbigeo } from "@/lib/ubigeo";
 
 // Proxy de la consulta por DNI a la API institucional de la UNAMAD.
-// Se hace del lado del servidor para evitar CORS y normalizar la respuesta
-// a los campos que usa el formulario de postulación.
-const UPSTREAM = "https://apidatos.unamad.edu.pe/api/consulta";
+// Se hace del lado del servidor para evitar CORS, no exponer el token y
+// normalizar la respuesta a los campos que usa el formulario de postulación.
+// Requiere APIDATOS_TOKEN en .env (Bearer emitido por la OTI).
+const UPSTREAM = process.env.APIDATOS_URL ?? "https://apidatos.unamad.edu.pe/api/consulta";
 
 type UpstreamDni = {
   DNI?: string;
@@ -27,16 +28,32 @@ export async function GET(
     return NextResponse.json({ error: "DNI inválido." }, { status: 400 });
   }
 
+  const token = process.env.APIDATOS_TOKEN;
+  if (!token) {
+    console.error("GET /api/dni: falta APIDATOS_TOKEN en .env");
+    return NextResponse.json(
+      { error: "El servicio de consulta no está configurado." },
+      { status: 503 },
+    );
+  }
+
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
     const res = await fetch(`${UPSTREAM}/${dni}`, {
       signal: controller.signal,
       cache: "no-store",
-      headers: { Accept: "application/json" },
+      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
     });
     clearTimeout(timeout);
 
+    if (res.status === 401 || res.status === 403) {
+      console.error(`GET /api/dni: la API rechazó el token (${res.status})`);
+      return NextResponse.json(
+        { error: "El servicio de consulta rechazó la credencial. Avisa a la OTI." },
+        { status: 502 },
+      );
+    }
     if (!res.ok) {
       return NextResponse.json(
         { error: "No se encontraron datos para ese DNI." },
