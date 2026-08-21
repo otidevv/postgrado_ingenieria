@@ -11,6 +11,7 @@ import {
   formatPeDate,
   formatReceipt,
   maskPeDate,
+  maskReceipt,
   type FieldErrors,
   type PaymentKind,
   type VoucherLookup,
@@ -348,8 +349,11 @@ function UploadFields({
                     inputMode="numeric"
                     autoComplete="off"
                     placeholder="002 - 00060299"
-                    maxLength={16}
+                    maxLength={14}
                     defaultValue={has ? formatReceipt(has.receiptNumber) : ""}
+                    onChange={(e) => {
+                      e.target.value = maskReceipt(e.target.value);
+                    }}
                   />
                   {fieldErrors[`${p.kind}_receipt`] && (
                     <span className="vf__err">

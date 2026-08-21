@@ -157,6 +157,13 @@ export function maskPeDate(raw: string): string {
   return parts.join("/");
 }
 
+/** Autoformato al teclear: "00200060299" → "002 - 00060299". */
+export function maskReceipt(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 3) return digits;
+  return `${digits.slice(0, 3)} - ${digits.slice(3)}`;
+}
+
 /** Presenta "002-00060299" como "002 - 00060299". */
 export function formatReceipt(v: string | null): string {
   if (!v) return "";
