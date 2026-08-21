@@ -352,3 +352,36 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Chip de filtro "Sin vouchers" */
+.ps-chip--warn {
+  margin-left: 6px;
+}
+.ps-chip--warn.is-active {
+  background: var(--st-triaged-fg);
+  border-color: var(--st-triaged-fg);
+}
+
+/* Indicadores de vouchers (M = matrícula, C = cuota/mensualidad) */
+.ps-pay {
+  display: inline-flex;
+  gap: 4px;
+}
+.ps-pay__dot {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--bg-sunken);
+  color: var(--text-faint);
+  border: 1px dashed var(--border-strong);
+  cursor: default;
+}
+.ps-pay__dot.is-ok {
+  background: var(--st-resolved-bg);
+  color: var(--st-resolved-fg);
+  border: 1px solid transparent;
+}

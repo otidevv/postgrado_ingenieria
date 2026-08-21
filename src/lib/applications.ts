@@ -69,6 +69,44 @@ export const DOCUMENT_SLOTS: DocSlot[] = [
   },
 ];
 
+// ─────────── Pagos (vouchers) ───────────
+// Códigos de pago que el postulante usa en el banco/caja. Son los mismos para
+// todos los diplomados; si en el futuro varían por programa, mover a la BD.
+export const PAYMENT_SLOTS = [
+  {
+    kind: "pago_matricula",
+    label: "Voucher de matrícula",
+    code: "494",
+    hint: "Comprobante del pago de matrícula (código 494).",
+  },
+  {
+    kind: "pago_mensualidad",
+    label: "Voucher de mensualidad",
+    code: "610",
+    hint: "Comprobante del pago de la primera mensualidad (código 610).",
+  },
+] as const;
+export type PaymentKind = (typeof PAYMENT_SLOTS)[number]["kind"];
+export const PAYMENT_KINDS = PAYMENT_SLOTS.map((p) => p.kind) as PaymentKind[];
+
+/** Estado de vouchers de una postulación (consulta pública por documento). */
+export type VoucherLookup =
+  | { found: false }
+  | {
+      found: true;
+      code: string;
+      firstName: string;
+      diplomaTitle: string;
+      uploaded: Record<PaymentKind, boolean>;
+    };
+
+export type VoucherSubmitState =
+  | { status: "idle" }
+  | { status: "error"; message: string; fieldErrors?: FieldErrors }
+  | { status: "success"; code: string; uploaded: Record<PaymentKind, boolean> };
+
+export const INITIAL_VOUCHER_STATE: VoucherSubmitState = { status: "idle" };
+
 // ─────────── Reglas de archivo ───────────
 export const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB por archivo
 export const ACCEPTED_MIME = [
@@ -116,7 +154,7 @@ export type FieldErrors = Record<string, string>;
 export type SubmitState =
   | { status: "idle" }
   | { status: "error"; message: string; fieldErrors?: FieldErrors; modal?: boolean }
-  | { status: "success"; code: string };
+  | { status: "success"; code: string; docNumber: string };
 
 export const INITIAL_SUBMIT_STATE: SubmitState = { status: "idle" };
 

@@ -13,6 +13,9 @@ export type ApplicationRow = {
   diplomaTitle: string;
   status: ApplicationStatus;
   docCount: number;
+  /** Vouchers de pago recibidos */
+  hasMatricula: boolean;
+  hasMensualidad: boolean;
   createdAt: string;
 };
 

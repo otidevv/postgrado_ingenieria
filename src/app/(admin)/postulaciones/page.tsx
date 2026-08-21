@@ -14,6 +14,10 @@ export default async function Page() {
     include: {
       diploma: { select: { title: true } },
       _count: { select: { documents: true } },
+      documents: {
+        where: { kind: { in: ["pago_matricula", "pago_mensualidad"] } },
+        select: { kind: true },
+      },
     },
   });
 
@@ -28,6 +32,8 @@ export default async function Page() {
     diplomaTitle: a.diploma.title,
     status: a.status,
     docCount: a._count.documents,
+    hasMatricula: a.documents.some((d) => d.kind === "pago_matricula"),
+    hasMensualidad: a.documents.some((d) => d.kind === "pago_mensualidad"),
     createdAt: a.createdAt.toISOString(),
   }));
 

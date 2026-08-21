@@ -10,6 +10,7 @@ import {
 import Link from "next/link";
 import { Toaster, toast } from "sonner";
 import { Icon } from "@/components/admin/Icon";
+import { VoucherForm } from "./VoucherForm";
 import {
   DOC_TYPES,
   GENDERS,
@@ -262,6 +263,11 @@ export function PostularForm({
             se comunicará contigo al correo registrado. Si necesitas asistencia,
             menciona tu código de seguimiento.
           </p>
+
+          {/* Paso final: pagos y vouchers (se puede completar más tarde
+              desde el botón flotante de la página de postulación). */}
+          <VoucherForm slug={slug} initialDocNumber={state.docNumber} />
+
           <div className="ps-done__actions">
             <Link href={`/diplomado/${slug}`} className="ps-btn ps-btn--primary">
               Volver al diplomado

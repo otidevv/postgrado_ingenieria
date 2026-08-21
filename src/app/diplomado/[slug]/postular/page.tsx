@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Icon } from "@/components/admin/Icon";
 import { getPublishedDiplomaBySlug } from "@/lib/diplomas";
 import { PostularForm } from "./PostularForm";
+import { VoucherFab } from "./VoucherFab";
 import { Robot3D } from "@/components/Robot3D";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
@@ -68,6 +69,9 @@ export default async function PostularPage({ params }: Params) {
           modulesCount={d.modules.length}
         />
       </main>
+
+      {/* Vouchers de pago para quien ya postuló (modal flotante) */}
+      <VoucherFab slug={slug} />
 
       {/* Personaje 3D flotante — esquina inferior izquierda */}
       <Robot3D className="ps-robot" />

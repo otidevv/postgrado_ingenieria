@@ -83,6 +83,7 @@ export function PostulacionesView({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | ApplicationStatus>("all");
+  const [onlyNoVouchers, setOnlyNoVouchers] = useState(false);
   const [q, setQ] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -103,6 +104,7 @@ export function PostulacionesView({
     const needle = q.trim().toLowerCase();
     return rows.filter((r) => {
       if (filter !== "all" && r.status !== filter) return false;
+      if (onlyNoVouchers && r.hasMatricula && r.hasMensualidad) return false;
       if (!needle) return true;
       return (
         r.fullName.toLowerCase().includes(needle) ||
@@ -113,7 +115,7 @@ export function PostulacionesView({
         r.diplomaTitle.toLowerCase().includes(needle)
       );
     });
-  }, [rows, filter, q]);
+  }, [rows, filter, q, onlyNoVouchers]);
 
   const sorted = useMemo(() => {
     const dir = sortDir === "asc" ? 1 : -1;
@@ -165,6 +167,8 @@ export function PostulacionesView({
       "Teléfono",
       "Diplomado",
       "Documentos",
+      "Voucher matrícula",
+      "Voucher mensualidad",
       "Estado",
       "Recibida",
     ];
@@ -177,6 +181,8 @@ export function PostulacionesView({
       r.phone,
       r.diplomaTitle,
       String(r.docCount),
+      r.hasMatricula ? "Sí" : "No",
+      r.hasMensualidad ? "Sí" : "No",
       STATUS_META[r.status].label,
       fmtDate(r.createdAt),
     ]);
@@ -200,6 +206,7 @@ export function PostulacionesView({
   };
 
   const sortProps = { sortKey, sortDir, onSort: toggleSort };
+  const noVoucherCount = rows.filter((r) => !(r.hasMatricula && r.hasMensualidad)).length;
 
   return (
     <div className="page">
@@ -256,6 +263,16 @@ export function PostulacionesView({
               {s.label} <span>{counts[s.value] ?? 0}</span>
             </button>
           ))}
+          <button
+            className={`ps-chip ps-chip--warn${onlyNoVouchers ? " is-active" : ""}`}
+            onClick={() => {
+              setOnlyNoVouchers((v) => !v);
+              setPage(1);
+            }}
+            title="Postulaciones a las que les falta al menos un voucher"
+          >
+            Sin vouchers <span>{noVoucherCount}</span>
+          </button>
         </div>
         <div className="ps-adm-search">
           <Icon name="search" size={16} />
@@ -294,6 +311,7 @@ export function PostulacionesView({
                   <SortTh k="docCount" className="dtable__num" {...sortProps}>
                     Docs
                   </SortTh>
+                  <th title="Vouchers de matrícula (494) y mensualidad (610)">Pagos</th>
                   <SortTh k="status" {...sortProps}>Estado</SortTh>
                   <SortTh k="createdAt" {...sortProps}>Recibida</SortTh>
                   <th className="dtable__settings">Acciones</th>
@@ -317,6 +335,22 @@ export function PostulacionesView({
                       </td>
                       <td className="dtable__muted">{r.diplomaTitle}</td>
                       <td className="dtable__num">{r.docCount}</td>
+                      <td>
+                        <span className="ps-pay" aria-label={`Matrícula: ${r.hasMatricula ? "recibido" : "pendiente"}; mensualidad: ${r.hasMensualidad ? "recibido" : "pendiente"}`}>
+                          <span
+                            className={`ps-pay__dot${r.hasMatricula ? " is-ok" : ""}`}
+                            title={`Matrícula (494): ${r.hasMatricula ? "recibido" : "pendiente"}`}
+                          >
+                            M
+                          </span>
+                          <span
+                            className={`ps-pay__dot${r.hasMensualidad ? " is-ok" : ""}`}
+                            title={`Mensualidad (610): ${r.hasMensualidad ? "recibido" : "pendiente"}`}
+                          >
+                            C
+                          </span>
+                        </span>
+                      </td>
                       <td>
                         {perms.canWrite ? (
                           <select
