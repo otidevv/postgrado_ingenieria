@@ -42,7 +42,10 @@ function fromHeader(): string {
 
 /** URL pública de la app para los enlaces del correo. */
 export function appUrl(path = ""): string {
-  const base = (process.env.APP_URL ?? "http://localhost:3001").replace(/\/+$/, "");
+  const base = (process.env.APP_URL ?? "https://posgrado-ingenieria.unamad.edu.pe").replace(
+    /\/+$/,
+    "",
+  );
   return `${base}${path}`;
 }
 

@@ -4,6 +4,9 @@ import { THEME_INIT_SCRIPT } from "@/lib/ui/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.APP_URL ?? "https://posgrado-ingenieria.unamad.edu.pe",
+  ),
   title: "Admin · UNAMAD",
   description:
     "Consola de administración de la Universidad Nacional Amazónica de Madre de Dios",
