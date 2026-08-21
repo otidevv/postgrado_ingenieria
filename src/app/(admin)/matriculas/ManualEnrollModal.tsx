@@ -175,7 +175,7 @@ export function ManualEnrollModal({ diplomas, onClose, onSubmit }: Props) {
                 Cancelar
               </button>
               <button type="submit" className="btn btn--primary" disabled={!valid || submitting}>
-                {submitting ? "Matriculando…" : "Matricular"}
+                {submitting ? "Matriculando y enviando credenciales…" : "Matricular y enviar credenciales"}
               </button>
             </footer>
           </>
