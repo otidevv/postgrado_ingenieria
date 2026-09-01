@@ -221,6 +221,11 @@ export function PostularForm({
         description: `Tu código de seguimiento es ${state.code}.`,
       });
       window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (state.status === "duplicate") {
+      toast.info("Ya tienes una postulación registrada", {
+        description: `Tu código es ${state.code}. Solo falta enviar tus vouchers de pago.`,
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [state]);
 
@@ -266,6 +271,41 @@ export function PostularForm({
 
           {/* Paso final: pagos y vouchers (se puede completar más tarde
               desde el botón flotante de la página de postulación). */}
+          <VoucherForm slug={slug} initialDocNumber={state.docNumber} />
+
+          <div className="ps-done__actions">
+            <Link href={`/diplomado/${slug}`} className="ps-btn ps-btn--primary">
+              Volver al diplomado
+            </Link>
+            <Link href="/" className="ps-btn ps-btn--ghost">
+              Ir al inicio
+            </Link>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (state.status === "duplicate") {
+    return (
+      <>
+        {toaster}
+        <div className="ps-done">
+          <span className="ps-done__icon">
+            <Icon name="check" size={34} />
+          </span>
+          <h2>Ya tienes una postulación registrada</h2>
+          <p>
+            Encontramos tu postulación al <b>Diplomado en {diplomaTitle}</b> con
+            el documento {state.docNumber}. Tu código de seguimiento es:
+          </p>
+          <div className="ps-code">{state.code}</div>
+          <p className="ps-done__note">
+            No necesitas volver a postular. Para completar el proceso solo
+            envía tu voucher de pago de matrícula aquí abajo.
+          </p>
+
+          {/* Paso pendiente: vouchers de pago, identificado con su documento. */}
           <VoucherForm slug={slug} initialDocNumber={state.docNumber} />
 
           <div className="ps-done__actions">

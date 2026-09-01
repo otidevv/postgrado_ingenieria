@@ -4,9 +4,9 @@ import { startTransition, useActionState, useEffect, useState, useTransition } f
 import { Icon } from "@/components/admin/Icon";
 import {
   ACCEPT_ATTR,
+  APPLY_PAYMENT_SLOTS,
   INITIAL_VOUCHER_STATE,
   MAX_FILE_BYTES,
-  PAYMENT_SLOTS,
   fmtBytes,
   formatPeDate,
   formatReceipt,
@@ -21,11 +21,12 @@ import {
 import { lookupVouchers, submitVouchers } from "./actions";
 
 /* ────────────────────────────────────────────────────────────────
-   Formulario de vouchers (matrícula + mensualidad)
+   Formulario de vouchers (solo los marcados askOnApply: matrícula)
    Dos pasos: (1) identificarse con el número de documento → el sistema
    busca la postulación y muestra qué vouchers ya tiene; (2) subir los
    que falten. Se usa en la pantalla de éxito de la postulación (con el
    documento ya conocido) y en el panel flotante de /postular.
+   La mensualidad se regulariza más adelante desde el panel de admin.
    ──────────────────────────────────────────────────────────────── */
 
 type Props = {
@@ -74,17 +75,18 @@ export function VoucherForm({ slug, initialDocNumber, compact, onDone }: Props) 
       {!compact && (
         <div className="vf__head">
           <span className="vf__eyebrow">Paso final</span>
-          <h3 className="vf__title">Envía tus vouchers de pago</h3>
+          <h3 className="vf__title">Envía tu voucher de matrícula</h3>
           <p className="vf__lead">
-            Para completar tu postulación realiza los dos pagos con estos
-            códigos y sube aquí los comprobantes.
+            Para completar tu postulación realiza el pago de matrícula con
+            este código y sube aquí el comprobante. La mensualidad se
+            regulariza más adelante.
           </p>
         </div>
       )}
 
       {/* Códigos de pago, siempre visibles */}
       <ul className="vf__codes" aria-label="Códigos de pago">
-        {PAYMENT_SLOTS.map((p) => (
+        {APPLY_PAYMENT_SLOTS.map((p) => (
           <li key={p.kind} className="vf__code">
             <span className="vf__code-label">{p.label.replace("Voucher de ", "")}</span>
             <span className="vf__code-num">{p.code}</span>
@@ -192,23 +194,23 @@ function UploadForm({
   const successKey = state.status === "success" ? JSON.stringify(state.uploaded) : "";
   // Estado efectivo: lo que devolvió el último envío, o lo que había al buscar.
   const uploaded = state.status === "success" ? state.uploaded : initialUploaded;
-  const allDone = PAYMENT_SLOTS.every((p) => uploaded[p.kind]);
+  const allDone = APPLY_PAYMENT_SLOTS.every((p) => uploaded[p.kind]);
 
   return (
     <>
       {allDone && state.status !== "success" && (
         <div className="vf__ok" role="status">
           <Icon name="check" size={16} />
-          Ya recibimos tus dos vouchers. Puedes volver a subirlos si necesitas
-          reemplazarlos.
+          Ya recibimos tu voucher de matrícula. Puedes volver a subirlo si
+          necesitas reemplazarlo.
         </div>
       )}
       {state.status === "success" && (
         <div className="vf__ok" role="status">
           <Icon name="check" size={16} />
           {allDone
-            ? "¡Listo! Recibimos tus dos vouchers. Tu postulación está completa."
-            : "Voucher recibido. Aún falta el otro comprobante."}
+            ? "¡Listo! Recibimos tu voucher de matrícula. Tu postulación está completa."
+            : "Voucher recibido. Aún falta el comprobante de matrícula."}
         </div>
       )}
       {state.status === "error" && (
@@ -275,8 +277,8 @@ function UploadFields({
         <p className="vf__guide-text">
           <Icon name="info" size={15} />
           <span>
-            Por cada voucher indica el <b>número de recibo</b> (ej. 002 - 00060299)
-            y la <b>fecha de pago</b> tal como figuran en el comprobante de caja.
+            Indica el <b>número de recibo</b> (ej. 002 - 00060299) y la{" "}
+            <b>fecha de pago</b> tal como figuran en el comprobante de caja.
           </span>
         </p>
         <button
@@ -302,7 +304,7 @@ function UploadFields({
       )}
 
       <div className="ps-docs vf__docs">
-        {PAYMENT_SLOTS.map((p) => {
+        {APPLY_PAYMENT_SLOTS.map((p) => {
           const file = picked[p.kind];
           const has = uploaded[p.kind];
           const err = fieldErrors[p.kind];
@@ -416,7 +418,7 @@ function UploadFields({
           className="ps-btn ps-btn--primary"
           disabled={pending || !Object.values(picked).some(Boolean)}
         >
-          {pending ? "Enviando…" : "Enviar vouchers"}
+          {pending ? "Enviando…" : "Enviar voucher"}
         </button>
         {onDone && (
           <button type="button" className="ps-btn ps-btn--ghost" onClick={onDone}>

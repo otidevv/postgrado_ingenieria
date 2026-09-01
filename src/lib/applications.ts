@@ -78,16 +78,21 @@ export const PAYMENT_SLOTS = [
     label: "Voucher de matrícula",
     code: "494",
     hint: "Comprobante del pago de matrícula (código 494).",
+    // Se pide al postular; la mensualidad se regulariza después (admin).
+    askOnApply: true,
   },
   {
     kind: "pago_mensualidad",
     label: "Voucher de mensualidad",
     code: "610",
     hint: "Comprobante del pago de la primera mensualidad (código 610).",
+    askOnApply: false,
   },
 ] as const;
 export type PaymentKind = (typeof PAYMENT_SLOTS)[number]["kind"];
 export const PAYMENT_KINDS = PAYMENT_SLOTS.map((p) => p.kind) as PaymentKind[];
+/** Vouchers que se piden en el formulario público de postulación. */
+export const APPLY_PAYMENT_SLOTS = PAYMENT_SLOTS.filter((p) => p.askOnApply);
 
 /** Datos del voucher ya recibido (null = aún no se ha subido). */
 export type VoucherInfo = {
@@ -220,7 +225,10 @@ export type FieldErrors = Record<string, string>;
 export type SubmitState =
   | { status: "idle" }
   | { status: "error"; message: string; fieldErrors?: FieldErrors; modal?: boolean }
-  | { status: "success"; code: string; docNumber: string };
+  | { status: "success"; code: string; docNumber: string }
+  // Ya existe una postulación con este documento: en vez de bloquear,
+  // se lleva al postulante directo al paso de vouchers de pago.
+  | { status: "duplicate"; code: string; docNumber: string };
 
 export const INITIAL_SUBMIT_STATE: SubmitState = { status: "idle" };
 

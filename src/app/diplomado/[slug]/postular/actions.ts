@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { saveUploadedFile } from "@/lib/applications-storage";
 import {
   ACCEPTED_MIME,
+  APPLY_PAYMENT_SLOTS,
   DOC_TYPES,
   DOCUMENT_SLOTS,
   MAX_FILE_BYTES,
@@ -133,17 +134,13 @@ export async function submitApplication(
   }
 
   // ── Duplicado (mismo documento + diplomado) ──
+  // No se bloquea: se lleva al postulante directo al paso de vouchers.
   const existing = await prisma.diplomaApplication.findUnique({
     where: { diplomaId_docNumber: { diplomaId: diploma.id, docNumber } },
     select: { code: true },
   });
   if (existing) {
-    return {
-      status: "error",
-      modal: true,
-      message: `Ya existe una postulación con este documento para este diplomado (código ${existing.code}).`,
-      fieldErrors: { docNumber: "Este documento ya postuló a este diplomado." },
-    };
+    return { status: "duplicate", code: existing.code, docNumber };
   }
 
   // ── Crear postulación ──
@@ -177,6 +174,15 @@ export async function submitApplication(
       e instanceof Prisma.PrismaClientKnownRequestError &&
       e.code === "P2002"
     ) {
+      // Carrera: alguien registró el mismo documento entre la verificación
+      // y el create. Se resuelve igual que el duplicado normal.
+      const dup = await prisma.diplomaApplication.findUnique({
+        where: { diplomaId_docNumber: { diplomaId: diploma.id, docNumber } },
+        select: { code: true },
+      });
+      if (dup) {
+        return { status: "duplicate", code: dup.code, docNumber };
+      }
       return {
         status: "error",
         modal: true,
@@ -307,7 +313,9 @@ export async function submitVouchers(
     paidAt: Date;
   }[] = [];
   const today = new Date();
-  for (const slot of PAYMENT_SLOTS) {
+  // Solo se aceptan los vouchers que se piden al postular (matrícula);
+  // la mensualidad se regulariza después desde el panel de admin.
+  for (const slot of APPLY_PAYMENT_SLOTS) {
     const f = formData.get(slot.kind);
     const file = f instanceof File && f.size > 0 ? f : null;
     if (!file) continue;
@@ -349,7 +357,7 @@ export async function submitVouchers(
     });
   }
   if (files.length === 0 && Object.keys(fieldErrors).length === 0) {
-    fieldErrors.files = "Adjunta al menos un voucher.";
+    fieldErrors.files = "Adjunta tu voucher de matrícula.";
   }
   if (Object.keys(fieldErrors).length > 0) {
     return {

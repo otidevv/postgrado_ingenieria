@@ -38,7 +38,7 @@ export function VoucherFab({ slug }: { slug: string }) {
         </span>
         <span className="vfab__text">
           <span className="vfab__title">¿Ya postulaste?</span>
-          <span className="vfab__sub">Envía tus vouchers de pago</span>
+          <span className="vfab__sub">Envía tu voucher de matrícula</span>
         </span>
         <span className="vfab__pulse" aria-hidden="true" />
       </button>
@@ -60,7 +60,7 @@ export function VoucherFab({ slug }: { slug: string }) {
               <div>
                 <span className="vf__eyebrow">Paso final de tu postulación</span>
                 <h3 id="vfab-title" className="vf__title">
-                  Envía tus vouchers de pago
+                  Envía tu voucher de matrícula
                 </h3>
               </div>
               <button
